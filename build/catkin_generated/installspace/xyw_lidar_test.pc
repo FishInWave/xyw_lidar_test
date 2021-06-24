@@ -1,0 +1,8 @@
+prefix=/usr/local
+
+Name: xyw_lidar_test
+Description: Description of xyw_lidar_test
+Version: 0.0.0
+Cflags: -I${prefix}/include
+Libs: -L${prefix}/lib 
+Requires: 

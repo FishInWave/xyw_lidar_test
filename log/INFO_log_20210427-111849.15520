@@ -1,0 +1,15 @@
+Log file created at: 2021/04/27 11:18:49
+Running on machine: xyw-GL552JX
+Log line format: [IWEF]mmdd hh:mm:ss.uuuuuu threadid file:line] msg
+I0427 11:18:49.540560 15520 lidarParse.hpp:32] load 124243 points
+I0427 11:18:49.540885 15520 lidarParse.hpp:60] AngleAxisd matrix: 
+00001.0003 -0.0431758 00.0354773
+00.0440896 0001.00057 -0.0254181
+0-0.034335 00.0269411 0001.00091
+AngleAxisd vector: 00.28025
+0.373666
+0.467083
+Euler Angle matrix(with angleaxis vector): 
+00.733505 000000000 00.679684
+00.187998 00.960986 -0.202884
+-0.653167 00.276595 00.704888

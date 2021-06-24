@@ -1,0 +1,2 @@
+lidar:
+  topic: /kitti/velo/pointcloud

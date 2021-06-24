@@ -1,0 +1,12 @@
+Log file created at: 2021/04/28 14:55:47
+Running on machine: xyw-GL552JX
+Log line format: [IWEF]mmdd hh:mm:ss.uuuuuu threadid file:line] msg
+I0428 14:55:47.705405 30844 lidarParse.hpp:34] load 124243 points
+I0428 14:55:47.705595 30844 lidarParse.hpp:55] ceres: 
+0.190477 -0.380953 0.904762
+0.952381 0.295238 -0.0761913
+-0.238095 0.87619 0.419048
+Eigen : 
+000.190477 0-0.380953 000.904762
+000.952381 000.295238 -0.0761913
+0-0.238095 000.876191 000.419048

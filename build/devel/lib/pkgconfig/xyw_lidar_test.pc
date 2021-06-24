@@ -1,0 +1,8 @@
+prefix=/home/xyw/catkin_ws/src/xyw_lidar_test/build/devel
+
+Name: xyw_lidar_test
+Description: Description of xyw_lidar_test
+Version: 0.0.0
+Cflags: -I/home/xyw/catkin_ws/src/xyw_lidar_test/include
+Libs: -L${prefix}/lib 
+Requires: 

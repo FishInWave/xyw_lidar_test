@@ -1,0 +1,11 @@
+Log file created at: 2021/05/30 21:57:38
+Running on machine: xyw-GL552JX
+Log line format: [IWEF]mmdd hh:mm:ss.uuuuuu threadid file:line] msg
+I0530 21:57:38.378899  6940 lidarParse.hpp:58] load 124243 points
+I0530 21:57:38.381412  6940 lidarParse.hpp:101] rgb address: 0x7ffd652d33c0 rgba address: 0x7ffd652d33c0 r address: ÿÿ b address: 
+I0530 21:57:38.381471  6940 lidarParse.hpp:108] a? ÿ
+I0530 21:57:38.381494  6940 lidarParse.hpp:111] p.rgb: -nan p.rgba: 4294901760
+I0530 21:57:38.381533  6940 lidarParse.hpp:112] p.bgra: 000 000 255 255
+I0530 21:57:38.381572  6940 lidarParse.hpp:113] p.rgba vector: 255 000 000 255
+I0530 21:57:38.381595  6940 lidarParse.hpp:114] color1 B: 0 color 2 G: 0 color 3 R: 255 A: 255
+I0530 21:57:38.381608  6940 lidarParse.hpp:115] r: 255 g: 0 b: 0
