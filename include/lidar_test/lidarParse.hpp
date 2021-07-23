@@ -76,7 +76,38 @@ public:
         // toSeeGaussDistributionShape();
         // toTestPCLRGBA();
         // toSeeWhichEnd();
-        testOfstream();
+        // testOfstream();
+        testVectorTransform();
+    }
+    void testVectorTransform(){
+        Eigen::Matrix4f T1,T2,T3;
+        T1.setIdentity();
+        T1(0,3) = 10;
+        T2.setIdentity();
+        T2(0,3) = 20;
+        T3.setIdentity();
+        T3(0,3) = 20;
+        vector<PointCloud> vec;
+        vec.push_back(*cloud_in);
+        vec.push_back(*cloud_in);
+        vec.push_back(*cloud_in);
+        vector<Eigen::Matrix4f> vec_T;
+        vec_T.push_back(T1);
+        vec_T.push_back(T2);
+        vec_T.push_back(T3);
+        PointCloud temp;
+        temp.reserve(3*cloud_in->size());
+        for(int i = 0;i < 3;++i){
+            pcl::transformPointCloud(vec[i],vec[i],vec_T[i]);
+            temp = temp + vec[i];
+        }
+        sensor_msgs::PointCloud2 pc;
+        temp.header.frame_id = "map";
+        point_pub.publish(temp);
+        cout << "一个点云：" << cloud_in->size() << endl;
+        cout << "三个点云：　" << temp.size() << endl;
+        pcl::io::savePCDFile("/tmp/pc.pcd",temp);
+        
     }
     void testOfstream(){
         std::ofstream ofs;
