@@ -35,11 +35,14 @@ private:
         int a;
         char b;
     };
-
+    int b;
+protected:
+    int a;
 public:
     pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_in;
     ros::Publisher vis_pub;
     ros::Publisher point_pub;
+    int c;
     lidarParse(ros::NodeHandle nh, int argc, char **argv)
     {
         cloud_in.reset(new pcl::PointCloud<pcl::PointXYZI>);
@@ -80,13 +83,16 @@ public:
         testVectorTransform();
     }
     void testVectorTransform(){
+        cout << "protected a= " << a << endl;
+        cout << "private b = " << b << endl;
+        cout << "public c = " << c << endl;
         Eigen::Matrix4f T1,T2,T3;
         T1.setIdentity();
         T1(0,3) = 10;
         T2.setIdentity();
         T2(0,3) = 20;
         T3.setIdentity();
-        T3(0,3) = 20;
+        T3(0,3) = 30;
         vector<PointCloud> vec;
         vec.push_back(*cloud_in);
         vec.push_back(*cloud_in);
@@ -286,8 +292,8 @@ public:
             marker_array.markers.push_back(marker);
         }
         cloud_in->header.frame_id = "map";
-        point_pub.publish(cloud_in);
-        vis_pub.publish(marker_array);
+        // point_pub.publish(cloud_in);
+        // vis_pub.publish(marker_array);
     }
 
     void testIsConverged()

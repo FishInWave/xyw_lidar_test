@@ -7,7 +7,7 @@ int main(int argc,char** argv){
     ros::Rate f(10);
     while (ros::ok())
     {
-        lp.toSeeGaussDistributionShape();
+        // lp.toSeeGaussDistributionShape();
         ros::spinOnce();
         f.sleep();
     }
