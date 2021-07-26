@@ -12,6 +12,12 @@ find_package(catkin REQUIRED COMPONENTS
   message_generation
   std_msgs
   visualization_msgs
+  dynamic_reconfigure
+)
+
+# dynamic reconfigure
+generate_dynamic_reconfigure_options(
+    cfg/XYWLidarTest.cfg
 )
 find_package(PCL)
 
@@ -56,6 +62,7 @@ generate_messages(
 catkin_package(
  INCLUDE_DIRS include
  DEPENDS PCL 
+          dynamic_reconfigure
 #  LIBRARIES xyw_lidar_test
 #  CATKIN_DEPENDS roscpp sensor_msgs std_msgs
 #  DEPENDS system_lib
@@ -86,7 +93,7 @@ link_directories(
 # add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 add_executable(${PROJECT_NAME}_node src/main.cpp)
-
+add_dependencies(${PROJECT_NAME}_node ${PROJECT_NAME}_gencfg)
 # set_target_properties(${PROJECT_NAME}_node PROPERTIES OUTPUT_NAME node PREFIX "")
 
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
