@@ -96,9 +96,9 @@ namespace xyw_lidar_test
             // toSeeWhichEnd();
             // testOfstream();
             // testVectorTransform();
-            // testNodeHandle();
+            testNodeHandle();
         }
-        // 测试ros::NodeHandle的用法
+        // 测试ros::NodeHandle的用法以及ROS_DEBUG_STREAM
         void testNodeHandle()
         {
             ros::NodeHandle n;                              //全局句柄
@@ -111,6 +111,8 @@ namespace xyw_lidar_test
                  << "\n 一般相对句柄： " << relative_nh.getNamespace()
                  << "\n 一般全局句柄： " << global_nh.getNamespace()
                  << "\n 二级句柄： " << second_nh.getNamespace() << endl;
+            ROS_DEBUG_STREAM("It's a debug msg");
+            ROS_DEBUG_STREAM_NAMED("hello","Its name is hello");
         }
         // 该函数证明动态调参程序会在初始化时被调用一次，move_base里这一步会完成默认参数的配置
         void reconfigureCB(XYWLidarTestConfig &config, uint32_t level)

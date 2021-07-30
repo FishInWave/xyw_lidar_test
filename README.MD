@@ -45,8 +45,8 @@
 答：一般是小端模式。代码核心思路：Union包含两个变量，令其中一个变量为1后，若另一变量也为1，说明低字节在低地址。小端比较符合C的想法。比如0x0001在小端模式下，低字节才是0x01。
 20. 测试文件输出流用法：testOfstream
 21. 点云拼接：testVectorTransform
-22. 测试ros::NodeHandle的用法：testNodeHandle\
-答：~会自动查询当前节点的名字。"hi"和"/hi"其实没什么差别，因为当前句柄默认是"/"。想要进行分级，最好使用二级句柄，输出为"/hh/second"。
+22. 测试ros::NodeHandle的用法和ROS_DEBUG输出：testNodeHandle\
+答：~会自动查询当前节点的名字。"hi"和"/hi"其实没什么差别，因为当前句柄默认是"/"。想要进行分级，最好使用二级句柄，输出为"/hh/second"。ROS的消息机制是过滤器，发是都发了，只是只有高于当前logger等级的信息才会在终端显示出来。使用ROS_DEBUG宏后若要看到数据，可以`rosrun rqt_logger_level rqt_logger_level`来调整节点的通知等级。
 
 # 测试切换方式
 取消相应函数的注释，然后重新编译运行即可。
