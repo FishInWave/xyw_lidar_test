@@ -47,9 +47,14 @@
 21. 点云拼接：testVectorTransform
 22. 测试ros::NodeHandle的用法和ROS_DEBUG输出：testNodeHandle\
 答：~会自动查询当前节点的名字。"hi"和"/hi"其实没什么差别，因为当前句柄默认是"/"。想要进行分级，最好使用二级句柄，输出为"/hh/second"。ROS的消息机制是过滤器，发是都发了，只是只有高于当前logger等级的信息才会在终端显示出来。使用ROS_DEBUG宏后若要看到数据，可以`rosrun rqt_logger_level rqt_logger_level`来调整节点的通知等级。
+23. 测试多线程lock
+24. 测试vector内存回收\
+答：clear，erase都无法释放内存，必须使用vector<T>().swap()
+25. eigen_conversions使用时必须在CMakeLists里添加对这个库的依赖。
 
 # 测试切换方式
 取消相应函数的注释，然后重新编译运行即可。
 
 # 修改记录
 2021-7-26 22:30 添加了README.MD，并加入了对动态调参以及句柄的测试。
+2021-8-3 22:26添加了对多线程lock，vector内存回收和eigen_conversions的测试。

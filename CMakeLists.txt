@@ -13,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   visualization_msgs
   dynamic_reconfigure
+  eigen_conversions
 )
 
 # dynamic reconfigure

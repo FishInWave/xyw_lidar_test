@@ -3,6 +3,9 @@
 #include <random>
 #include "omp.h"
 #include <fstream>
+#include <mutex>
+#include <thread>
+#include <deque>
 
 #include <glog/logging.h>
 #include <ros/ros.h>
@@ -19,6 +22,7 @@
 #include <ceres/rotation.h>
 
 #include <Eigen/Dense>
+#include <Eigen/Geometry>
 
 #include <ros/ros.h>
 #include <sensor_msgs/PointCloud2.h>
@@ -26,6 +30,10 @@
 #include <pcl_ros/point_cloud.h>
 #include <dynamic_reconfigure/server.h>
 #include "xyw_lidar_test/XYWLidarTestConfig.h"
+#include <eigen_conversions/eigen_msg.h>
+#include <geometry_msgs/PoseStamped.h>
+#include <tf_conversions/tf_eigen.h>
+#include <tf/tf.h>
 using namespace std;
 
 using PointT = pcl::PointXYZI;
@@ -47,6 +55,8 @@ namespace xyw_lidar_test
 
     protected:
         int a;
+        mutex data_mutex;
+        int shared_num;
 
     public:
         pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_in;
@@ -96,7 +106,98 @@ namespace xyw_lidar_test
             // toSeeWhichEnd();
             // testOfstream();
             // testVectorTransform();
-            testNodeHandle();
+            // testNodeHandle();
+            // testMultiThread();
+            // testVectorMemoryManage();
+            testEigenConvert();
+        }
+        void testEigenConvert()
+        {
+            geometry_msgs::Pose pose;
+            Eigen::Affine3d transform;
+            tf::poseMsgToEigen(pose, transform);
+            // cout << "pose msg: " << pose.position.x << " " << pose.position.y << " " << pose.position.z << endl;
+            cout << transform.matrix() << endl;
+        }
+
+        //  只有vector需要用swap来释放内存空间
+        // erase操作其实比pop慢，但调用次数多了以后，对栈的操作导致耗时增加
+        void testVectorMemoryManage()
+        {
+            vector<int> v;
+            v.reserve(1000);
+            v.push_back(1);
+            v.push_back(1);
+            v.push_back(1);
+            v.push_back(1);
+            cout << v.size() << endl;     //4
+            cout << v.capacity() << endl; //1000
+            v.erase(v.begin());
+            cout << v.size() << endl;     //3
+            cout << v.capacity() << endl; //1000
+            v.clear();
+            cout << v.size() << endl;     //3
+            cout << v.capacity() << endl; //1000
+            vector<int>(v).swap(v);
+            cout << v.size() << endl;     //4
+            cout << v.capacity() << endl; //4
+            vector<int>().swap(v);
+            cout << v.size() << endl;     //0
+            cout << v.capacity() << endl; //0
+        }
+        //测试多线程互斥{}
+        // 线程1 使用unique_lock在{}锁住互斥量，每50ms修改值，持续20次，清醒后，再改变值，睡眠1s。
+        // 线程2 每隔100ms读取一次这个量，读取前，需要上锁，打印，然后睡眠
+        // 验证：lock_guard所谓的局部加锁，是针对{}吗？
+        // 结果：{}有效
+        void testMultiThread()
+        {
+            thread writeT(&lidarParse::writeThread, this);
+            thread readT(&lidarParse::readThread, this);
+            writeT.join();
+            readT.join();
+            cout << "This is main thread." << endl;
+        }
+        void readThread()
+        {
+            cout << "This is reading thread." << endl;
+            chrono::milliseconds duration(100);
+            this_thread::sleep_for(duration);
+            {
+                unique_lock<mutex> lock(data_mutex);
+
+                for (size_t i = 0; i < 10; i++)
+                {
+                    cout << "read result is : " << shared_num << endl;
+                    this_thread::sleep_for(duration);
+                }
+            }
+            for (size_t i = 0; i < 10; i++)
+            {
+                cout << "Out read result is : " << shared_num << endl;
+                this_thread::sleep_for(duration);
+            }
+            cout << "read thread shuts down." << endl;
+        }
+        void writeThread()
+        {
+            cout << "This is write Thread." << endl;
+            shared_num = 0;
+            chrono::milliseconds duration(50);
+
+            unique_lock<mutex> lock(data_mutex);
+            for (int i = 0; i < 20; i++)
+            {
+                cout << "shared_num = " << shared_num++ << endl;
+                this_thread::sleep_for(duration);
+            }
+
+            for (int i = 0; i < 20; i++)
+            {
+                cout << "Out shared_num = " << shared_num++ << endl;
+                this_thread::sleep_for(duration);
+            }
+            cout << "Write Thread shuts down" << endl;
         }
         // 测试ros::NodeHandle的用法以及ROS_DEBUG_STREAM
         void testNodeHandle()
@@ -112,7 +213,7 @@ namespace xyw_lidar_test
                  << "\n 一般全局句柄： " << global_nh.getNamespace()
                  << "\n 二级句柄： " << second_nh.getNamespace() << endl;
             ROS_DEBUG_STREAM("It's a debug msg");
-            ROS_DEBUG_STREAM_NAMED("hello","Its name is hello");
+            ROS_DEBUG_STREAM_NAMED("hello", "Its name is hello");
         }
         // 该函数证明动态调参程序会在初始化时被调用一次，move_base里这一步会完成默认参数的配置
         void reconfigureCB(XYWLidarTestConfig &config, uint32_t level)
@@ -191,7 +292,7 @@ namespace xyw_lidar_test
         // pcl内部实际上是按照bgr在存储的。
         // float rgb的低字节依次是BGR
         // float rgb和 int rgba的首地址其实一样
-        //TODO 为什么r b的地址无法得到？-》rgb address: 0x7fffb149f530 rgba address: 0x7fffb149f530 r address: ��qU b address: 
+        //TODO 为什么r b的地址无法得到？-》rgb address: 0x7fffb149f530 rgba address: 0x7fffb149f530 r address: ��qU b address:
         // float 直接用memcpy复制到一个数组，这会使得低字节的b等于数组的[0]元素
         // int 类型的话，由于直接一次性取了32位，因此高字节是A，接下来分别是RGB。
         void toTestPCLRGBA()
@@ -349,7 +450,7 @@ namespace xyw_lidar_test
             // point_pub.publish(cloud_in);
             // vis_pub.publish(marker_array);
         }
-// 为了debug LiTAMIN2创造的方法
+        // 为了debug LiTAMIN2创造的方法
         void testIsConverged()
         {
             Eigen::Matrix4d m;
@@ -423,8 +524,7 @@ namespace xyw_lidar_test
         {
             Eigen::Vector4d v(3, 4, 5, 6); // 假设 w在前
             v.normalize();
-            double q[4] = {v[0], v[1],v[2],v[3]}; // 假设w在后
-
+            double q[4] = {v[0], v[1], v[2], v[3]}; // 假设w在后
 
             Eigen::Quaterniond quat(v[0], v[1], v[2], v[3]);
             Eigen::Map<Eigen::Quaterniond> quat_map(q);
