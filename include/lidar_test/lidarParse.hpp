@@ -34,6 +34,8 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <tf_conversions/tf_eigen.h>
 #include <tf/tf.h>
+#include <nlink_parser/LinktrackAoaNodeframe0.h>
+#include <nlink_example/UwbFilter.h>
 using namespace std;
 
 using PointT = pcl::PointXYZI;
@@ -62,6 +64,7 @@ namespace xyw_lidar_test
         pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_in;
         ros::Publisher vis_pub;
         ros::Publisher point_pub;
+        ros::Publisher nlink_pub;
         int c;
         lidarParse(ros::NodeHandle nh, int argc, char **argv)
         {
@@ -87,6 +90,8 @@ namespace xyw_lidar_test
             dsrv_ = new dynamic_reconfigure::Server<XYWLidarTestConfig>(ros::NodeHandle("cfg"));
             dynamic_reconfigure::Server<XYWLidarTestConfig>::CallbackType cb = boost::bind(&lidarParse::reconfigureCB, this, _1, _2);
             dsrv_->setCallback(cb);
+            nlink_pub = nh.advertise<nlink_parser::LinktrackAoaNodeframe0>("/nlink_linktrack_aoa_nodeframe0",10);
+            nlink_example::UwbFilter msg;
             // testKDtree();
             // testPointCloudTransform();
             // testTransformIndex();
@@ -109,7 +114,7 @@ namespace xyw_lidar_test
             // testNodeHandle();
             // testMultiThread();
             // testVectorMemoryManage();
-            testEigenConvert();
+            // testEigenConvert();
         }
         void testEigenConvert()
         {
