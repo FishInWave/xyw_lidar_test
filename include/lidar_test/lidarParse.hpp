@@ -32,6 +32,7 @@
 #include "xyw_lidar_test/XYWLidarTestConfig.h"
 #include <eigen_conversions/eigen_msg.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <nav_msgs/Odometry.h>
 #include <tf_conversions/tf_eigen.h>
 #include <tf/tf.h>
 #include <nlink_parser/LinktrackAoaNodeframe0.h>
@@ -91,7 +92,7 @@ namespace xyw_lidar_test
             dsrv_ = new dynamic_reconfigure::Server<XYWLidarTestConfig>(ros::NodeHandle("~/cfg"));
             dynamic_reconfigure::Server<XYWLidarTestConfig>::CallbackType cb = boost::bind(&lidarParse::reconfigureCB, this, _1, _2);
             dsrv_->setCallback(cb);
-            nlink_pub = nh.advertise<nlink_parser::LinktrackAoaNodeframe0>("/nlink_linktrack_aoa_nodeframe0",10);
+            nlink_pub = nh.advertise<nlink_parser::LinktrackAoaNodeframe0>("/nlink_linktrack_aoa_nodeframe0", 10);
             nlink_example::UwbFilter msg;
             // testKDtree();
             // testPointCloudTransform();
@@ -116,11 +117,69 @@ namespace xyw_lidar_test
             // testMultiThread();
             // testVectorMemoryManage();
             // testEigenConvert();
-            testIncludeOrder();
+            // testIncludeOrder();
+            testTimeWasted();
         }
+        // 测试tf2的耗时：全过程0.03ms一次，如果mutex仅进行简单赋值0.000156ms。
+        // 顺便提一下，q.setRPY以及q.x()比起double之间的赋值要耗时的多，一个操作约0.005ms，约100多倍。
+        // FIXME tf2::convert(q,geometry_msgs::Quaternion)没有成功
+        void testTimeWasted()
+        {
+            geometry_msgs::PoseStamped robot_vel;
+            nav_msgs::Odometry base_odom;
+            base_odom.header.frame_id = "odom";
+            base_odom.child_frame_id = "base_link";
+            base_odom.header.stamp = ros::Time::now();
+            base_odom.pose.pose.position.x = 1;
+            base_odom.pose.pose.position.y = 1;
+            base_odom.pose.pose.position.z = 1;
+            base_odom.pose.pose.orientation.w = 1;
+            base_odom.twist.twist.angular.z = 1;
+            base_odom.twist.twist.linear.x = 1;
+            base_odom.twist.twist.linear.y = 1;
+            for (int i = 0; i < 10; ++i)
+            {
+                ros::Time t1 = ros::Time::now();
+
+                robot_vel.header.frame_id = base_odom.child_frame_id;
+                robot_vel.pose.position.x = base_odom.twist.twist.linear.x;
+                robot_vel.pose.position.y = base_odom.twist.twist.linear.y;
+                ros::Time t3 = ros::Time::now();
+                tf2::Quaternion q;
+                q.setRPY(0, 0, base_odom.twist.twist.angular.z);
+
+                robot_vel.pose.orientation.w = q.w();
+                robot_vel.pose.orientation.x = q.x();
+                robot_vel.pose.orientation.y = q.y();
+                robot_vel.pose.orientation.z = q.z();
+                ros::Time t4 = ros::Time::now();
+                robot_vel.header.stamp = ros::Time::now();
+                ros::Time t2 = ros::Time::now();
+                ros::Duration tt(t4 - t3);
+                cout << "setRPY: " << tt.toSec() * 1000 << " ms" << endl;
+                ros::Duration t(t2 - t1);
+                cout << t.toSec() * 1000 << "ms" << endl;
+            }
+            geometry_msgs::Twist global_vel;
+            cout << "4 line" << endl;
+            for (int i = 0; i < 10; ++i)
+            {
+                ros::Time t1 = ros::Time::now();
+                global_vel.linear.x = base_odom.twist.twist.linear.x;
+                robot_vel.header.frame_id = base_odom.child_frame_id;
+                global_vel.linear.y = base_odom.twist.twist.linear.y;
+
+                global_vel.linear.z = base_odom.twist.twist.angular.z;
+                ros::Time t2 = ros::Time::now();
+                ros::Duration t(t2 - t1);
+                cout << t.toSec() * 1000 << "ms" << endl;
+            }
+        }
+
         // 说明cmake里即便include顺序是先include，再catkin，依然优先访问了opt。
         // 无论使用""还是<>
-        void testIncludeOrder(){
+        void testIncludeOrder()
+        {
             xyw::printHello();
         }
         void testEigenConvert()

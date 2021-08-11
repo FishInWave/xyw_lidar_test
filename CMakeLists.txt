@@ -9,12 +9,16 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   sensor_msgs
   geometry_msgs
+  nav_msgs
   message_generation
   std_msgs
   visualization_msgs
   dynamic_reconfigure
   eigen_conversions
   nlink_example
+  tf2 
+  tf2_ros 
+  tf2_geometry_msgs
 )
 
 # dynamic reconfigure
