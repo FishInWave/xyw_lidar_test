@@ -11,7 +11,7 @@
 
 # 已有测试
 1. GLOG的配置和使用
-2. ROS的动态调参，注意句柄不可用是"/"，且动态调参的callback会在初始化时被调用一次，完成默认参数的配置。
+2. ROS的动态调参，注意句柄不可用是"/"，且动态调参的callback会在初始化时被调用一次，完成参数的配置,参数值从rosparam sever获取，若不存在，则使用cfg的默认值，因此有动态调参情况下，其实不需要使用nh.param，此外，关于命名空间，～是直接继承当前节点名字，为了匹配，launch里应当把rosparam file放到node里面。
 3. 测试KDtree构建的耗时：testKDtree
 4. 测试多线程加速的点云转换速度：testPointCloudTransform\
 答：PCL和自己写的OMP耗时接近。
@@ -51,9 +51,15 @@
 24. 测试vector内存回收\
 答：clear，erase都无法释放内存，必须使用vector<T>().swap()
 25. eigen_conversions使用时必须在CMakeLists里添加对这个库的依赖。
+26. 测试cmake的include顺序
+答： 无论是使用""还是<>，都优先访问了opt，因此如果自己要修改，且不想变更库文件，还是直接修改include的文件名比较好。
 
 # 测试切换方式
 取消相应函数的注释，然后重新编译运行即可。
+运行：
+```
+roslaunch xyw_lidar_test xyw_start.launch
+```
 
 # 修改记录
 2021-7-26 22:30 添加了README.MD，并加入了对动态调参以及句柄的测试。

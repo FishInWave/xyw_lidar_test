@@ -1,0 +1,6 @@
+<launch>
+    <node pkg="xyw_lidar_test" type="xyw_lidar_test_node" name="xyw_lidar_test_node" output="screen">
+        <rosparam file="$(find xyw_lidar_test)/yaml/lidar.yaml" command="load"/>
+    </node>
+    
+</launch>

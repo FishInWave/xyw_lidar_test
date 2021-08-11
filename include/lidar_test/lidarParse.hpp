@@ -36,6 +36,7 @@
 #include <tf/tf.h>
 #include <nlink_parser/LinktrackAoaNodeframe0.h>
 #include <nlink_example/UwbFilter.h>
+#include "xyw_test_include/hello.hpp"
 using namespace std;
 
 using PointT = pcl::PointXYZI;
@@ -87,7 +88,7 @@ namespace xyw_lidar_test
             point_pub = nh.advertise<sensor_msgs::PointCloud2>("map", 10);
             ros::NodeHandle pri_nh("~/move_base");
             // Note： 初始化dynamic_reconfigure::Server时的句柄不可使用全局句柄"/"，否则服务器里是没办法看到参数的
-            dsrv_ = new dynamic_reconfigure::Server<XYWLidarTestConfig>(ros::NodeHandle("cfg"));
+            dsrv_ = new dynamic_reconfigure::Server<XYWLidarTestConfig>(ros::NodeHandle("~/cfg"));
             dynamic_reconfigure::Server<XYWLidarTestConfig>::CallbackType cb = boost::bind(&lidarParse::reconfigureCB, this, _1, _2);
             dsrv_->setCallback(cb);
             nlink_pub = nh.advertise<nlink_parser::LinktrackAoaNodeframe0>("/nlink_linktrack_aoa_nodeframe0",10);
@@ -115,6 +116,12 @@ namespace xyw_lidar_test
             // testMultiThread();
             // testVectorMemoryManage();
             // testEigenConvert();
+            testIncludeOrder();
+        }
+        // 说明cmake里即便include顺序是先include，再catkin，依然优先访问了opt。
+        // 无论使用""还是<>
+        void testIncludeOrder(){
+            xyw::printHello();
         }
         void testEigenConvert()
         {
@@ -221,6 +228,7 @@ namespace xyw_lidar_test
             ROS_DEBUG_STREAM_NAMED("hello", "Its name is hello");
         }
         // 该函数证明动态调参程序会在初始化时被调用一次，move_base里这一步会完成默认参数的配置
+        // 若rosparam里已经有这个参数，则config调用该参数的值，否则取cfg里的默认值
         void reconfigureCB(XYWLidarTestConfig &config, uint32_t level)
         {
             if (!setup_)

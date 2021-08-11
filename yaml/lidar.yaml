@@ -1,2 +1,4 @@
 lidar:
   topic: /kitti/velo/pointcloud
+cfg:
+  mark_threshold: 1
