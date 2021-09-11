@@ -7,6 +7,7 @@ SET(CMAKE_BUILD_TYPE "Debug")
 LIST(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake_modules")
 find_package(catkin REQUIRED COMPONENTS
   roscpp
+  roslib # for ros/package.h
   sensor_msgs
   geometry_msgs
   nav_msgs
@@ -19,6 +20,7 @@ find_package(catkin REQUIRED COMPONENTS
   tf2 
   tf2_ros 
   tf2_geometry_msgs
+  pcl_conversions
 )
 
 # dynamic reconfigure

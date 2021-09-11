@@ -63,6 +63,7 @@
         "string": "cpp",
         "string_view": "cpp",
         "geometry": "cpp",
-        "mutex": "cpp"
+        "mutex": "cpp",
+        "condition_variable": "cpp"
     }
 }

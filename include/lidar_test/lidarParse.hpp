@@ -38,6 +38,11 @@
 #include <nlink_parser/LinktrackAoaNodeframe0.h>
 #include <nlink_example/UwbFilter.h>
 #include "xyw_test_include/hello.hpp"
+#include "time_utils.hpp"
+#include <unistd.h> // for path
+#include <ros/package.h> // for path
+#include "rslidar_utils.hpp"
+#include <pcl_conversions/pcl_conversions.h>
 using namespace std;
 
 using PointT = pcl::PointXYZI;
@@ -67,6 +72,7 @@ namespace xyw_lidar_test
         ros::Publisher vis_pub;
         ros::Publisher point_pub;
         ros::Publisher nlink_pub;
+        ros::Subscriber points_sub;
         int c;
         lidarParse(ros::NodeHandle nh, int argc, char **argv)
         {
@@ -92,6 +98,7 @@ namespace xyw_lidar_test
             dsrv_ = new dynamic_reconfigure::Server<XYWLidarTestConfig>(ros::NodeHandle("~/cfg"));
             dynamic_reconfigure::Server<XYWLidarTestConfig>::CallbackType cb = boost::bind(&lidarParse::reconfigureCB, this, _1, _2);
             dsrv_->setCallback(cb);
+            points_sub = nh.subscribe("/rslidar_points",10,&lidarParse::cloud_callback,this);
             nlink_pub = nh.advertise<nlink_parser::LinktrackAoaNodeframe0>("/nlink_linktrack_aoa_nodeframe0", 10);
             nlink_example::UwbFilter msg;
             // testKDtree();
@@ -118,7 +125,63 @@ namespace xyw_lidar_test
             // testVectorMemoryManage();
             // testEigenConvert();
             // testIncludeOrder();
-            testTimeWasted();
+            // testTimeWasted();
+            // testGetPath();
+            testTimeSDK();
+        }
+        //测试结果：ros 1631339391.843172550
+        //     chrono  1631339391.843170881
+        // 相差2ms，应该是指令执行的时间，因此可以认为ROS底层就是调的system_clock。
+        void testTimeSDK(){
+            //测试ROS time 和 std::chrono的计时是否一致
+            ros::Time t = ros::Time::now();
+            auto tp = std::chrono::system_clock::now();
+            
+            double chrono_time = (double) (std::chrono::duration_cast<chrono::duration<double>>(tp.time_since_epoch())).count();
+            double ros_time = double(t.sec)+double(t.nsec)/1000000000.0;
+            cout << "ros time: " << fixed <<  setprecision(9)<<ros_time<<" \n chrono_time: " << fixed << setprecision(9)
+            << chrono_time << endl;
+
+        }
+        // 1. rs pointxyzirt里的i是uint8，所以不可直接用fromROSMsg，应当修改rs的驱动
+        // 2. 转换遵循ros->pointcloud2->pointT。前两者是二进制存储，第三个是普通的类。
+        void cloud_callback(sensor_msgs::PointCloud2ConstPtr msg){
+
+            pcl::PointCloud<RsPointXYZIRT>::Ptr cloud(new pcl::PointCloud<RsPointXYZIRT>());
+            pcl::PointCloud<pcl::PointXYZ> new_cloud;
+            pcl::PCLPointCloud2 pclcloud;
+            // 直接根据类型去构造，要求msg和cloud对field的定义一致。
+            pcl::fromROSMsg(*msg,new_cloud);
+            int index = 3000;
+            // RsPointXYZIRT point = cloud->at(index);
+            // cout << "x: " << point.x << " y: " << point.y << " z: " << point.z << " intensity: " << (int)point.intensity
+            //  << " ring: " << point.ring << " timestamp: " << point.timestamp << endl;
+
+            // cout << endl;
+            
+        
+            tic::TicToc t;
+            t.tic();
+            // for(auto point : *cloud){
+            //     PointT p;
+            //     p.x = point.x;
+            //     p.y = point.y;
+            //     p.z = point.z;
+            //     p.intensity = (float) point.intensity;
+            //     new_cloud.push_back(p);
+            // }
+            cout << t.toc() << endl;
+            sensor_msgs::PointCloud2 newcloudmsg;
+            pcl::toROSMsg(new_cloud,newcloudmsg);
+            point_pub.publish(newcloudmsg);
+        }
+        // 测试c++的路径获取,可以使用ros的package，也可使用系统自带的unistd（direct.h好像也有）
+        void testGetPath(){
+            string path = ros::package::getPath("xyw_lidar_test");
+            cout << path << endl;
+            char buffer[50];
+            getcwd(buffer,50);
+            cout << string(buffer) << endl;
         }
         // 测试tf2的耗时：全过程0.03ms一次，如果mutex仅进行简单赋值0.000156ms。
         // 顺便提一下，q.setRPY以及q.x()比起double之间的赋值要耗时的多，一个操作约0.005ms，约100多倍。

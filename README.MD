@@ -54,7 +54,9 @@
 26. 测试cmake的include顺序
 答： 无论是使用""还是<>，都优先访问了opt，因此如果自己要修改，且不想变更库文件，还是直接修改include的文件名比较好。
 27. 测试tf2的转换失败了，测试了tf2::Quaternion的耗时，平均每个操作0.005ms，相比之下，double的赋值耗时是其百分之一。
-
+28. `testGetPath`:测试C++和ROS的路径获取方式，其中ROS可以得到包的位置，getcwd是得到当前运行位置。
+29. `cloud_callback` 确认了pcl到ros的类型转换流程：pointclouT-》pointcloud2-》ros
+30. `testTimeSDK`: 经测试ros::Time和std::chrono::system_clock基本一致。
 # 测试切换方式
 取消相应函数的注释，然后重新编译运行即可。
 运行：
@@ -66,3 +68,4 @@ roslaunch xyw_lidar_test xyw_start.launch
 2021-7-26 22:30 添加了README.MD，并加入了对动态调参以及句柄的测试。
 2021-8-3 22:26添加了对多线程lock，vector内存回收和eigen_conversions的测试。
 2021-08-11 16:57:26 增加26.27
+2021-09-11 增加了28-30
