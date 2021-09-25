@@ -57,6 +57,7 @@
 28. `testGetPath`:测试C++和ROS的路径获取方式，其中ROS可以得到包的位置，getcwd是得到当前运行位置。
 29. `cloud_callback` 确认了pcl到ros的类型转换流程：pointclouT-》pointcloud2-》ros
 30. `testTimeSDK`: 经测试ros::Time和std::chrono::system_clock基本一致。
+31. `testSlerp`: slerp中的t是other的系数，即q.slerp(1,p) = p。
 # 测试切换方式
 取消相应函数的注释，然后重新编译运行即可。
 运行：
@@ -69,3 +70,4 @@ roslaunch xyw_lidar_test xyw_start.launch
 2021-8-3 22:26添加了对多线程lock，vector内存回收和eigen_conversions的测试。
 2021-08-11 16:57:26 增加26.27
 2021-09-11 增加了28-30
+2021-09-25 增加了31

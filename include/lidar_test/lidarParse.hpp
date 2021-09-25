@@ -127,7 +127,16 @@ namespace xyw_lidar_test
             // testIncludeOrder();
             // testTimeWasted();
             // testGetPath();
-            testTimeSDK();
+            // testTimeSDK();
+            testSlerp();
+        }
+        // 与wiki一致，t表示与后者的接近程度。
+        void testSlerp(){
+            Eigen::Quaterniond q(1,0,0,0);
+            Eigen::Quaterniond q2(0.5,0.6,0.6,0.6);
+            q2.normalize();
+            auto q3 = q2.slerp(1.0,q);
+            cout << q3.coeffs() << endl;
         }
         //测试结果：ros 1631339391.843172550
         //     chrono  1631339391.843170881
