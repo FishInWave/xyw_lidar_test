@@ -58,6 +58,7 @@
 29. `cloud_callback` 确认了pcl到ros的类型转换流程：pointclouT-》pointcloud2-》ros
 30. `testTimeSDK`: 经测试ros::Time和std::chrono::system_clock基本一致。
 31. `testSlerp`: slerp中的t是other的系数，即q.slerp(1,p) = p。
+32. `testMultispinner`： 经测试，使用Multispinner后，回调函数自动进行多线程调用；
 # 测试切换方式
 取消相应函数的注释，然后重新编译运行即可。
 运行：
@@ -71,3 +72,4 @@ roslaunch xyw_lidar_test xyw_start.launch
 2021-08-11 16:57:26 增加26.27
 2021-09-11 增加了28-30
 2021-09-25 增加了31
+2021-11-4 增加了32

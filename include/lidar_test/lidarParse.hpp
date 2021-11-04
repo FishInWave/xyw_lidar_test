@@ -26,6 +26,8 @@
 
 #include <ros/ros.h>
 #include <sensor_msgs/PointCloud2.h>
+#include <sensor_msgs/NavSatFix.h>
+#include <geometry_msgs/TwistStamped.h>
 #include <visualization_msgs/MarkerArray.h>
 #include <pcl_ros/point_cloud.h>
 #include <dynamic_reconfigure/server.h>
@@ -72,85 +74,26 @@ namespace xyw_lidar_test
         ros::Publisher vis_pub;
         ros::Publisher point_pub;
         ros::Publisher nlink_pub;
-        ros::Subscriber points_sub;
+        ros::Subscriber points_sub,gpsfix,gpsvel;
         int c;
-        lidarParse(ros::NodeHandle nh, int argc, char **argv)
+        // 该函数证明动态调参程序会在初始化时被调用一次，move_base里这一步会完成默认参数的配置
+        // 若rosparam里已经有这个参数，则config调用该参数的值，否则取cfg里的默认值
+        void reconfigureCB(XYWLidarTestConfig &config, uint32_t level)
         {
-            cloud_in.reset(new pcl::PointCloud<pcl::PointXYZI>);
-            // 初始化GLOG
-            FLAGS_log_dir = "/home/xyw/catkin_ws/src/xyw_lidar_test/log";
-            google::InitGoogleLogging(argv[0]); // 以程序命名
-            google::SetLogDestination(google::GLOG_INFO, "/home/xyw/catkin_ws/src/xyw_lidar_test/log/INFO_");
-            google::SetStderrLogging(google::GLOG_INFO);
-            google::SetLogFilenameExtension("log_");
-            FLAGS_colorlogtostderr = true;          // Set log color
-            FLAGS_logbufsecs = 0;                   // Set log output speed(s)
-            FLAGS_max_log_size = 1024;              // Set max log file size
-            FLAGS_stop_logging_if_full_disk = true; // If disk is full
-            // load a pcd file
-            pcl::io::loadPCDFile("/home/xyw/catkin_ws/src/xyw_lidar_test/res/000027.pcd", *cloud_in);
-
-            LOG(INFO) << "load " << cloud_in->size() << " points";
-            vis_pub = nh.advertise<visualization_msgs::MarkerArray>("vis_marker", 10);
-            point_pub = nh.advertise<sensor_msgs::PointCloud2>("map", 10);
-            ros::NodeHandle pri_nh("~/move_base");
-            // Note： 初始化dynamic_reconfigure::Server时的句柄不可使用全局句柄"/"，否则服务器里是没办法看到参数的
-            dsrv_ = new dynamic_reconfigure::Server<XYWLidarTestConfig>(ros::NodeHandle("~/cfg"));
-            dynamic_reconfigure::Server<XYWLidarTestConfig>::CallbackType cb = boost::bind(&lidarParse::reconfigureCB, this, _1, _2);
-            dsrv_->setCallback(cb);
-            points_sub = nh.subscribe("/rslidar_points",10,&lidarParse::cloud_callback,this);
-            nlink_pub = nh.advertise<nlink_parser::LinktrackAoaNodeframe0>("/nlink_linktrack_aoa_nodeframe0", 10);
-            nlink_example::UwbFilter msg;
-            // testKDtree();
-            // testPointCloudTransform();
-            // testTransformIndex();
-            // testEigenVectorDir();
-            // testEigenArrayAbs();
-            // testGetVector4fMap();
-            // testGauss();
-            // testEigenTemplate<double>();
-            // testMatrixNorm();
-            // testAngleAxlesAndEulerAngle();
-            // testCeresTransform();
-            // testLLT();
-            // testCovAndPositiveDefinite();
-            // testIsConverged();
-            // toSeeGaussDistributionShape();
-            // toTestPCLRGBA();
-            // toSeeWhichEnd();
-            // testOfstream();
-            // testVectorTransform();
-            // testNodeHandle();
-            // testMultiThread();
-            // testVectorMemoryManage();
-            // testEigenConvert();
-            // testIncludeOrder();
-            // testTimeWasted();
-            // testGetPath();
-            // testTimeSDK();
-            testSlerp();
-        }
-        // 与wiki一致，t表示与后者的接近程度。
-        void testSlerp(){
-            Eigen::Quaterniond q(1,0,0,0);
-            Eigen::Quaterniond q2(0.5,0.6,0.6,0.6);
-            q2.normalize();
-            auto q3 = q2.slerp(1.0,q);
-            cout << q3.coeffs() << endl;
-        }
-        //测试结果：ros 1631339391.843172550
-        //     chrono  1631339391.843170881
-        // 相差2ms，应该是指令执行的时间，因此可以认为ROS底层就是调的system_clock。
-        void testTimeSDK(){
-            //测试ROS time 和 std::chrono的计时是否一致
-            ros::Time t = ros::Time::now();
-            auto tp = std::chrono::system_clock::now();
-            
-            double chrono_time = (double) (std::chrono::duration_cast<chrono::duration<double>>(tp.time_since_epoch())).count();
-            double ros_time = double(t.sec)+double(t.nsec)/1000000000.0;
-            cout << "ros time: " << fixed <<  setprecision(9)<<ros_time<<" \n chrono_time: " << fixed << setprecision(9)
-            << chrono_time << endl;
-
+            if (!setup_)
+            {
+                cout << "hi , it's the first time to run the reconfigureCB"
+                     << ". mark_threshold: " << mark_threshold << endl;
+                mark_threshold = config.mark_threshold;
+                cout << "now: " << mark_threshold << endl;
+                setup_ = true;
+            }
+            else
+            {
+                cout << "Its has been setuped. The mark_threshold is: " << mark_threshold << endl;
+                mark_threshold = config.mark_threshold;
+                cout << "now: " << mark_threshold << endl;
+            }
         }
         // 1. rs pointxyzirt里的i是uint8，所以不可直接用fromROSMsg，应当修改rs的驱动
         // 2. 转换遵循ros->pointcloud2->pointT。前两者是二进制存储，第三个是普通的类。
@@ -184,6 +127,133 @@ namespace xyw_lidar_test
             pcl::toROSMsg(new_cloud,newcloudmsg);
             point_pub.publish(newcloudmsg);
         }
+        lidarParse(ros::NodeHandle nh, int argc, char **argv)
+        {
+            cloud_in.reset(new pcl::PointCloud<pcl::PointXYZI>);
+            // 初始化GLOG
+            FLAGS_log_dir = "/home/xyw/catkin_ws/src/xyw_lidar_test/log";
+            google::InitGoogleLogging(argv[0]); // 以程序命名
+            google::SetLogDestination(google::GLOG_INFO, "/home/xyw/catkin_ws/src/xyw_lidar_test/log/INFO_");
+            google::SetStderrLogging(google::GLOG_INFO);
+            google::SetLogFilenameExtension("log_");
+            FLAGS_colorlogtostderr = true;          // Set log color
+            FLAGS_logbufsecs = 0;                   // Set log output speed(s)
+            FLAGS_max_log_size = 1024;              // Set max log file size
+            FLAGS_stop_logging_if_full_disk = true; // If disk is full
+            // load a pcd file
+            pcl::io::loadPCDFile("/home/xyw/catkin_ws/src/xyw_lidar_test/res/000027.pcd", *cloud_in);
+
+            LOG(INFO) << "load " << cloud_in->size() << " points";
+            vis_pub = nh.advertise<visualization_msgs::MarkerArray>("vis_marker", 10);
+            point_pub = nh.advertise<sensor_msgs::PointCloud2>("map", 10);
+            ros::NodeHandle pri_nh("~/move_base");
+            // Note： 初始化dynamic_reconfigure::Server时的句柄不可使用全局句柄"/"，否则服务器里是没办法看到参数的
+            dsrv_ = new dynamic_reconfigure::Server<XYWLidarTestConfig>(ros::NodeHandle("~/cfg"));
+            dynamic_reconfigure::Server<XYWLidarTestConfig>::CallbackType cb = boost::bind(&lidarParse::reconfigureCB, this, _1, _2);
+            dsrv_->setCallback(cb);
+            points_sub = nh.subscribe("/rslidar_points",10,&lidarParse::cloud_callback,this);
+            nlink_pub = nh.advertise<nlink_parser::LinktrackAoaNodeframe0>("/nlink_linktrack_aoa_nodeframe0", 10);
+            nlink_example::UwbFilter msg;
+            gpsfix = nh.subscribe("/gps/fix",10,&lidarParse::fix_cb,this);
+            gpsvel = nh.subscribe("/gps/vel",10,&lidarParse::vel_cb,this);
+
+            // testKDtree();
+            // testPointCloudTransform();
+            // testTransformIndex();
+            // testEigenVectorDir();
+            // testEigenArrayAbs();
+            // testGetVector4fMap();
+            // testGauss();
+            // testEigenTemplate<double>();
+            // testMatrixNorm();
+            // testAngleAxlesAndEulerAngle();
+            // testCeresTransform();
+            // testLLT();
+            // testCovAndPositiveDefinite();
+            // testIsConverged();
+            // toSeeGaussDistributionShape();
+            // toTestPCLRGBA();
+            // toSeeWhichEnd();
+            // testOfstream();
+            // testVectorTransform();
+            // testNodeHandle();
+            // testMultiThread();
+            // testVectorMemoryManage();
+            // testEigenConvert();
+            // testIncludeOrder();
+            // testTimeWasted();
+            // testGetPath();
+            // testTimeSDK();
+            // testSlerp();
+            // testEulerAndAngles();
+            testMultiSpin();
+        }
+        void testMultiSpin(){
+            // fix和vel的消息同频率播放；
+            // 若multispinner会使得cb被多线程回调，则可以看到fix 10Hz，vel 1Hz
+            // 若spinner会使cb被单线程回调，则可以看到 fix和vel交替进行；
+            // 实验结果与预期一致，说明使用multispinner会使得callback被多线程回调，互不干扰。
+            // 补充说明：若在两个cb里加互斥量，则两者的频率无法保持10:1，原因是互斥锁的存在使得两个线程谁先被调用就会阻止对方；
+            // 而多线程情况下，我们无法确定哪个线程会更早被唤起，即便他们都已经就绪。
+        }
+        void fix_cb(const sensor_msgs::NavSatFixPtr& msg){
+            // lock_guard<mutex> lock(data_mutex);
+            ROS_INFO_STREAM("fix");
+        }
+        void vel_cb(const geometry_msgs::TwistStampedConstPtr& msg){
+            // lock_guard<mutex> lock(data_mutex);
+            this_thread::sleep_for(chrono::milliseconds(1000));
+            ROS_INFO_STREAM("vel");
+        }
+# if 0
+        // 经过测试，轴角在5°以内的话，与欧拉角的差距在0.05°左右。
+        void testEulerAndAngles(){
+            while(ros::ok()){
+            double v1,v2,v3,a;
+            cout << "输入v1,v2,v3,a." << endl;
+            cin >> v1 >> v2 >> v3 >> a;
+            Eigen::Vector3d v(v1,v2,v3);
+            Eigen::AngleAxisd angle(a,v.normalized());
+            Eigen::Matrix3d m(angle);
+            Eigen::Quaterniond q(angle);
+            Eigen::Matrix3d mm(q);
+            auto euler1 = m.eulerAngles(0,1,2);
+            // Eigen::Matrix3d mm = Eigen::AngleAxisd(euler1[2],Eigen::Vector3d::UnitZ()).toRotationMatrix()* Eigen::AngleAxisd(euler1[1],Eigen::Vector3d::UnitY()).toRotationMatrix() 
+            //     * Eigen::AngleAxisd(euler1[0],Eigen::Vector3d::UnitX()).toRotationMatrix();
+            Eigen::Matrix3d mmm = Eigen::AngleAxisd(euler1[0],Eigen::Vector3d::UnitX()).toRotationMatrix()
+                * Eigen::AngleAxisd(euler1[1],Eigen::Vector3d::UnitY()).toRotationMatrix()
+                * Eigen::AngleAxisd(euler1[2],Eigen::Vector3d::UnitZ()).toRotationMatrix();
+            auto euler2 = m.eulerAngles(2,1,0);
+            // cout << "axles: " << v.normalized().transpose() * a /M_PI*180.0
+            // << "\n" << "euler1: " << euler1.transpose()/M_PI*180.0  
+            // << "\n" << "euler2: " << euler2.transpose()/M_PI*180.0 <<endl; 
+            cout << "m: \n" << m << "\nmm: \n" << mm << "\nmmm: \n" << mmm << endl;
+            }
+            
+        }
+        // 与wiki一致，t表示与后者的接近程度。
+        void testSlerp(){
+            Eigen::Quaterniond q(1,0,0,0);
+            Eigen::Quaterniond q2(0.5,0.6,0.6,0.6);
+            q2.normalize();
+            auto q3 = q2.slerp(1.0,q);
+            cout << q3.coeffs() << endl;
+        }
+        //测试结果：ros 1631339391.843172550
+        //     chrono  1631339391.843170881
+        // 相差2ms，应该是指令执行的时间，因此可以认为ROS底层就是调的system_clock。
+        void testTimeSDK(){
+            //测试ROS time 和 std::chrono的计时是否一致
+            ros::Time t = ros::Time::now();
+            auto tp = std::chrono::system_clock::now();
+            
+            double chrono_time = (double) (std::chrono::duration_cast<chrono::duration<double>>(tp.time_since_epoch())).count();
+            double ros_time = double(t.sec)+double(t.nsec)/1000000000.0;
+            cout << "ros time: " << fixed <<  setprecision(9)<<ros_time<<" \n chrono_time: " << fixed << setprecision(9)
+            << chrono_time << endl;
+
+        }
+        
         // 测试c++的路径获取,可以使用ros的package，也可使用系统自带的unistd（direct.h好像也有）
         void testGetPath(){
             string path = ros::package::getPath("xyw_lidar_test");
@@ -358,25 +428,7 @@ namespace xyw_lidar_test
             ROS_DEBUG_STREAM("It's a debug msg");
             ROS_DEBUG_STREAM_NAMED("hello", "Its name is hello");
         }
-        // 该函数证明动态调参程序会在初始化时被调用一次，move_base里这一步会完成默认参数的配置
-        // 若rosparam里已经有这个参数，则config调用该参数的值，否则取cfg里的默认值
-        void reconfigureCB(XYWLidarTestConfig &config, uint32_t level)
-        {
-            if (!setup_)
-            {
-                cout << "hi , it's the first time to run the reconfigureCB"
-                     << ". mark_threshold: " << mark_threshold << endl;
-                mark_threshold = config.mark_threshold;
-                cout << "now: " << mark_threshold << endl;
-                setup_ = true;
-            }
-            else
-            {
-                cout << "Its has been setuped. The mark_threshold is: " << mark_threshold << endl;
-                mark_threshold = config.mark_threshold;
-                cout << "now: " << mark_threshold << endl;
-            }
-        }
+
         // 测试点云拼接
         void testVectorTransform()
         {
@@ -935,5 +987,6 @@ namespace xyw_lidar_test
         }
         lidarParse() = default;
         ~lidarParse() { google::ShutdownGoogleLogging(); };
+    # endif
     };
 }
