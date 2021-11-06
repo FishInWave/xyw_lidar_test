@@ -45,6 +45,7 @@
 #include <ros/package.h> // for path
 #include "rslidar_utils.hpp"
 #include <pcl_conversions/pcl_conversions.h>
+#include "KITTI_helper.hpp"
 using namespace std;
 
 using PointT = pcl::PointXYZI;
@@ -72,7 +73,7 @@ namespace xyw_lidar_test
     public:
         pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_in;
         ros::Publisher vis_pub;
-        ros::Publisher point_pub;
+        ros::Publisher point1_pub,point2_pub;
         ros::Publisher nlink_pub;
         ros::Subscriber points_sub,gpsfix,gpsvel;
         int c;
@@ -125,7 +126,16 @@ namespace xyw_lidar_test
             cout << t.toc() << endl;
             sensor_msgs::PointCloud2 newcloudmsg;
             pcl::toROSMsg(new_cloud,newcloudmsg);
-            point_pub.publish(newcloudmsg);
+            point1_pub.publish(newcloudmsg);
+        }
+        void fix_cb(const sensor_msgs::NavSatFixPtr& msg){
+            // lock_guard<mutex> lock(data_mutex);
+            ROS_INFO_STREAM("fix");
+        }
+        void vel_cb(const geometry_msgs::TwistStampedConstPtr& msg){
+            // lock_guard<mutex> lock(data_mutex);
+            this_thread::sleep_for(chrono::milliseconds(1000));
+            ROS_INFO_STREAM("vel");
         }
         lidarParse(ros::NodeHandle nh, int argc, char **argv)
         {
@@ -145,7 +155,8 @@ namespace xyw_lidar_test
 
             LOG(INFO) << "load " << cloud_in->size() << " points";
             vis_pub = nh.advertise<visualization_msgs::MarkerArray>("vis_marker", 10);
-            point_pub = nh.advertise<sensor_msgs::PointCloud2>("map", 10);
+            point1_pub = nh.advertise<sensor_msgs::PointCloud2>("cloud1", 10);
+            point2_pub = nh.advertise<sensor_msgs::PointCloud2>("cloud2", 10);
             ros::NodeHandle pri_nh("~/move_base");
             // Note： 初始化dynamic_reconfigure::Server时的句柄不可使用全局句柄"/"，否则服务器里是没办法看到参数的
             dsrv_ = new dynamic_reconfigure::Server<XYWLidarTestConfig>(ros::NodeHandle("~/cfg"));
@@ -186,8 +197,62 @@ namespace xyw_lidar_test
             // testTimeSDK();
             // testSlerp();
             // testEulerAndAngles();
-            testMultiSpin();
+            // testMultiSpin();
+            testKITTIsync();
+            // testEigenAffineAndTransform();
         }
+        // 结论：Affine是4*3矩阵，可以通过.matix方法得到4*4矩阵，pcl的transform是根据传统的rpy计算方式得到的
+        void testEigenAffineAndTransform(){
+            float x = 1,y = 2, z = 3, r = 0.5 , p = 0.6 , ya = 0.7;
+            Eigen::Affine3f af = pcl::getTransformation(x,y,z,r,p,ya);
+            Eigen::Isometry3d is(af.matrix().cast<double>());
+            cout << is.matrix() << endl;
+            Eigen::Matrix4d m;
+            m.block<3,3>(0,0) = Eigen::Matrix3d(Eigen::AngleAxisd(0.7,Eigen::Vector3d(0,0,1))*
+            Eigen::AngleAxisd(0.6,Eigen::Vector3d(0,1,0))*
+            Eigen::AngleAxisd(0.5,Eigen::Vector3d(1,0,0)));
+            m.block<4,1>(0,3) = Eigen::Vector4d(1,2,3,1);
+            cout << "matrix:\n" << m << endl;
+        }
+        // 结论：kitti的sync并没有被校准，依然需要运动补偿,sync和extract基本一样。
+        void testKITTIsync(){
+            std::string odompath = "/home/xyw/Downloads/0000000003.txt";
+            std::vector<Eigen::Vector3f> odom_points,sync_points;
+            pcl::PointCloud<pcl::PointXYZI> odom = getPointCloudFromTxt(odompath,"odom",odom_points);
+            pcl::PointCloud<pcl::PointXYZI> sync = getPointCloudFromBin("/home/xyw/Downloads/0000000000.bin","sync",sync_points);
+            odom.header.frame_id = "map";
+            sync.header.frame_id = "map";
+            
+            if(odom.size() != sync.size()){
+                cout << "the size of odom and sync is different." << endl;
+            }
+            int i = 0;
+            int count = 0;
+            int valid = 0;
+            while(i++ < odom.size()){
+                if(!isNanPoint(odom_points[i]) && !isNanPoint(sync_points[i])){
+                    float dis = disBetweenPoints(odom_points[i],sync_points[i]);
+                    valid++;
+                    if(dis > 0.05)
+                    {
+                        count++;
+                        cout << dis << " " << flush;
+                    }
+                }else{
+                    ROS_WARN_NAMED("warn","nan");
+                }
+            }
+            cout << count << "/" << valid << endl;
+        //  sensor_msgs::PointCloud2 odommsg;
+        //  pcl::toROSMsg(odom,odommsg);
+        //  sensor_msgs::PointCloud2 syncmsg;
+        //  pcl::toROSMsg(sync,syncmsg);
+
+            point1_pub.publish(odom);
+            point2_pub.publish(sync);
+        }
+
+        # if 0
         void testMultiSpin(){
             // fix和vel的消息同频率播放；
             // 若multispinner会使得cb被多线程回调，则可以看到fix 10Hz，vel 1Hz
@@ -196,16 +261,6 @@ namespace xyw_lidar_test
             // 补充说明：若在两个cb里加互斥量，则两者的频率无法保持10:1，原因是互斥锁的存在使得两个线程谁先被调用就会阻止对方；
             // 而多线程情况下，我们无法确定哪个线程会更早被唤起，即便他们都已经就绪。
         }
-        void fix_cb(const sensor_msgs::NavSatFixPtr& msg){
-            // lock_guard<mutex> lock(data_mutex);
-            ROS_INFO_STREAM("fix");
-        }
-        void vel_cb(const geometry_msgs::TwistStampedConstPtr& msg){
-            // lock_guard<mutex> lock(data_mutex);
-            this_thread::sleep_for(chrono::milliseconds(1000));
-            ROS_INFO_STREAM("vel");
-        }
-# if 0
         // 经过测试，轴角在5°以内的话，与欧拉角的差距在0.05°左右。
         void testEulerAndAngles(){
             while(ros::ok()){
