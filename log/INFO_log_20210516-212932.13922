@@ -1,4 +1,0 @@
-Log file created at: 2021/05/16 21:29:32
-Running on machine: xyw-GL552JX
-Log line format: [IWEF]mmdd hh:mm:ss.uuuuuu threadid file:line] msg
-I0516 21:29:32.354421 13922 lidarParse.hpp:53] load 124243 points

@@ -37,8 +37,8 @@
 #include <nav_msgs/Odometry.h>
 #include <tf_conversions/tf_eigen.h>
 #include <tf/tf.h>
-#include <nlink_parser/LinktrackAoaNodeframe0.h>
-#include <nlink_example/UwbFilter.h>
+// #include <nlink_parser/LinktrackAoaNodeframe0.h>
+// #include <nlink_example/UwbFilter.h>
 #include "xyw_test_include/hello.hpp"
 #include "time_utils.hpp"
 #include <unistd.h> // for path
@@ -74,7 +74,7 @@ namespace xyw_lidar_test
         pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_in;
         ros::Publisher vis_pub;
         ros::Publisher point1_pub,point2_pub;
-        ros::Publisher nlink_pub;
+        // ros::Publisher nlink_pub;
         ros::Subscriber points_sub,gpsfix,gpsvel;
         int c;
         // 该函数证明动态调参程序会在初始化时被调用一次，move_base里这一步会完成默认参数的配置
@@ -96,21 +96,31 @@ namespace xyw_lidar_test
                 cout << "now: " << mark_threshold << endl;
             }
         }
-        // 1. rs pointxyzirt里的i是uint8，所以不可直接用fromROSMsg，应当修改rs的驱动
-        // 2. 转换遵循ros->pointcloud2->pointT。前两者是二进制存储，第三个是普通的类。
+        // 1. rs pointxyzirt里的i是uint8，所以不可直接用fromROSMsg转换到pcl::PointXYZI,，应当修改rs的驱动
+        // 2. 转换遵循ros->pointcloud2->pointT。前两者是二进制存储，第三个是结构明确的类，失败原因应该是按照pcl的intensity定义在RSPointXYZIRT
+        //里是找不到intensity的，因为两个定义的类型不一样。
+        //3. msg的时间戳是消息到达时间，点时间戳是硬件采集时间，基准不一样。
         void cloud_callback(sensor_msgs::PointCloud2ConstPtr msg){
 
             pcl::PointCloud<RsPointXYZIRT>::Ptr cloud(new pcl::PointCloud<RsPointXYZIRT>());
-            pcl::PointCloud<pcl::PointXYZ> new_cloud;
-            pcl::PCLPointCloud2 pclcloud;
+            pcl::PointCloud<pcl::PointXYZI>::Ptr new_cloud(new pcl::PointCloud<pcl::PointXYZI>);
             // 直接根据类型去构造，要求msg和cloud对field的定义一致。
-            pcl::fromROSMsg(*msg,new_cloud);
+            pcl::fromROSMsg(*msg,*cloud);
+            double begin_time = msg->header.stamp.toSec();
+            // int i = 0;
+            // for(auto point : *cloud){
+            //     LOG(INFO) << point.timestamp - begin_time << endl;
+            //     if(i++ > 1){
+            //         break;
+            //     }
+            // }
+            // LOG(INFO) << cloud->back().timestamp - begin_time << endl;
+            LOG(INFO) << cloud->back().timestamp - cloud->front().timestamp << endl;
             int index = 3000;
-            // RsPointXYZIRT point = cloud->at(index);
+            auto point = cloud->at(index);
             // cout << "x: " << point.x << " y: " << point.y << " z: " << point.z << " intensity: " << (int)point.intensity
-            //  << " ring: " << point.ring << " timestamp: " << point.timestamp << endl;
-
-            // cout << endl;
+            //  << " ring: " << point.ring << " timestamp: " << point.timestamp 
+            // << endl;
             
         
             tic::TicToc t;
@@ -125,7 +135,7 @@ namespace xyw_lidar_test
             // }
             cout << t.toc() << endl;
             sensor_msgs::PointCloud2 newcloudmsg;
-            pcl::toROSMsg(new_cloud,newcloudmsg);
+            pcl::toROSMsg(*new_cloud,newcloudmsg);
             point1_pub.publish(newcloudmsg);
         }
         void fix_cb(const sensor_msgs::NavSatFixPtr& msg){
@@ -163,8 +173,8 @@ namespace xyw_lidar_test
             dynamic_reconfigure::Server<XYWLidarTestConfig>::CallbackType cb = boost::bind(&lidarParse::reconfigureCB, this, _1, _2);
             dsrv_->setCallback(cb);
             points_sub = nh.subscribe("/rslidar_points",10,&lidarParse::cloud_callback,this);
-            nlink_pub = nh.advertise<nlink_parser::LinktrackAoaNodeframe0>("/nlink_linktrack_aoa_nodeframe0", 10);
-            nlink_example::UwbFilter msg;
+            // nlink_pub = nh.advertise<nlink_parser::LinktrackAoaNodeframe0>("/nlink_linktrack_aoa_nodeframe0", 10);
+            // nlink_example::UwbFilter msg;
             gpsfix = nh.subscribe("/gps/fix",10,&lidarParse::fix_cb,this);
             gpsvel = nh.subscribe("/gps/vel",10,&lidarParse::vel_cb,this);
 
@@ -198,7 +208,7 @@ namespace xyw_lidar_test
             // testSlerp();
             // testEulerAndAngles();
             // testMultiSpin();
-            testKITTIsync();
+            // testKITTIsync();
             // testEigenAffineAndTransform();
         }
         // 结论：Affine是4*3矩阵，可以通过.matix方法得到4*4矩阵，pcl的transform是根据传统的rpy计算方式得到的

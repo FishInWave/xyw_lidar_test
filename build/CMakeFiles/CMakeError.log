@@ -1,22 +1,22 @@
 Determining if the pthread_create exist failed with the following output:
 Change Dir: /home/xyw/catkin_ws/src/xyw_lidar_test/build/CMakeFiles/CMakeTmp
 
-Run Build Command:"/usr/bin/make" "cmTC_24feb/fast"
-/usr/bin/make -f CMakeFiles/cmTC_24feb.dir/build.make CMakeFiles/cmTC_24feb.dir/build
+Run Build Command:"/usr/bin/make" "cmTC_5f2bc/fast"
+/usr/bin/make -f CMakeFiles/cmTC_5f2bc.dir/build.make CMakeFiles/cmTC_5f2bc.dir/build
 make[1]: Entering directory '/home/xyw/catkin_ws/src/xyw_lidar_test/build/CMakeFiles/CMakeTmp'
-Building C object CMakeFiles/cmTC_24feb.dir/CheckSymbolExists.c.o
-/usr/bin/cc    -o CMakeFiles/cmTC_24feb.dir/CheckSymbolExists.c.o   -c /home/xyw/catkin_ws/src/xyw_lidar_test/build/CMakeFiles/CMakeTmp/CheckSymbolExists.c
-Linking C executable cmTC_24feb
-/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_24feb.dir/link.txt --verbose=1
-/usr/bin/cc      -rdynamic CMakeFiles/cmTC_24feb.dir/CheckSymbolExists.c.o  -o cmTC_24feb 
-CMakeFiles/cmTC_24feb.dir/CheckSymbolExists.c.o: In function `main':
+Building C object CMakeFiles/cmTC_5f2bc.dir/CheckSymbolExists.c.o
+/usr/bin/x86_64-linux-gnu-gcc-7    -o CMakeFiles/cmTC_5f2bc.dir/CheckSymbolExists.c.o   -c /home/xyw/catkin_ws/src/xyw_lidar_test/build/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+Linking C executable cmTC_5f2bc
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_5f2bc.dir/link.txt --verbose=1
+/usr/bin/x86_64-linux-gnu-gcc-7      -rdynamic CMakeFiles/cmTC_5f2bc.dir/CheckSymbolExists.c.o  -o cmTC_5f2bc 
+CMakeFiles/cmTC_5f2bc.dir/CheckSymbolExists.c.o: In function `main':
 CheckSymbolExists.c:(.text+0x1b): undefined reference to `pthread_create'
 collect2: error: ld returned 1 exit status
-CMakeFiles/cmTC_24feb.dir/build.make:97: recipe for target 'cmTC_24feb' failed
-make[1]: *** [cmTC_24feb] Error 1
+CMakeFiles/cmTC_5f2bc.dir/build.make:97: recipe for target 'cmTC_5f2bc' failed
+make[1]: *** [cmTC_5f2bc] Error 1
 make[1]: Leaving directory '/home/xyw/catkin_ws/src/xyw_lidar_test/build/CMakeFiles/CMakeTmp'
-Makefile:126: recipe for target 'cmTC_24feb/fast' failed
-make: *** [cmTC_24feb/fast] Error 2
+Makefile:126: recipe for target 'cmTC_5f2bc/fast' failed
+make: *** [cmTC_5f2bc/fast] Error 2
 
 File /home/xyw/catkin_ws/src/xyw_lidar_test/build/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
 /* */
@@ -36,20 +36,20 @@ int main(int argc, char** argv)
 Determining if the function pthread_create exists in the pthreads failed with the following output:
 Change Dir: /home/xyw/catkin_ws/src/xyw_lidar_test/build/CMakeFiles/CMakeTmp
 
-Run Build Command:"/usr/bin/make" "cmTC_2c995/fast"
-/usr/bin/make -f CMakeFiles/cmTC_2c995.dir/build.make CMakeFiles/cmTC_2c995.dir/build
+Run Build Command:"/usr/bin/make" "cmTC_25e7e/fast"
+/usr/bin/make -f CMakeFiles/cmTC_25e7e.dir/build.make CMakeFiles/cmTC_25e7e.dir/build
 make[1]: Entering directory '/home/xyw/catkin_ws/src/xyw_lidar_test/build/CMakeFiles/CMakeTmp'
-Building C object CMakeFiles/cmTC_2c995.dir/CheckFunctionExists.c.o
-/usr/bin/cc   -DCHECK_FUNCTION_EXISTS=pthread_create   -o CMakeFiles/cmTC_2c995.dir/CheckFunctionExists.c.o   -c /usr/share/cmake-3.10/Modules/CheckFunctionExists.c
-Linking C executable cmTC_2c995
-/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_2c995.dir/link.txt --verbose=1
-/usr/bin/cc  -DCHECK_FUNCTION_EXISTS=pthread_create    -rdynamic CMakeFiles/cmTC_2c995.dir/CheckFunctionExists.c.o  -o cmTC_2c995 -lpthreads 
+Building C object CMakeFiles/cmTC_25e7e.dir/CheckFunctionExists.c.o
+/usr/bin/x86_64-linux-gnu-gcc-7   -DCHECK_FUNCTION_EXISTS=pthread_create   -o CMakeFiles/cmTC_25e7e.dir/CheckFunctionExists.c.o   -c /usr/share/cmake-3.10/Modules/CheckFunctionExists.c
+Linking C executable cmTC_25e7e
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_25e7e.dir/link.txt --verbose=1
+/usr/bin/x86_64-linux-gnu-gcc-7  -DCHECK_FUNCTION_EXISTS=pthread_create    -rdynamic CMakeFiles/cmTC_25e7e.dir/CheckFunctionExists.c.o  -o cmTC_25e7e -lpthreads 
 /usr/bin/ld: cannot find -lpthreads
 collect2: error: ld returned 1 exit status
-CMakeFiles/cmTC_2c995.dir/build.make:97: recipe for target 'cmTC_2c995' failed
-make[1]: *** [cmTC_2c995] Error 1
+CMakeFiles/cmTC_25e7e.dir/build.make:97: recipe for target 'cmTC_25e7e' failed
+make[1]: *** [cmTC_25e7e] Error 1
 make[1]: Leaving directory '/home/xyw/catkin_ws/src/xyw_lidar_test/build/CMakeFiles/CMakeTmp'
-Makefile:126: recipe for target 'cmTC_2c995/fast' failed
-make: *** [cmTC_2c995/fast] Error 2
+Makefile:126: recipe for target 'cmTC_25e7e/fast' failed
+make: *** [cmTC_25e7e/fast] Error 2
 
 

@@ -16,7 +16,7 @@ find_package(catkin REQUIRED COMPONENTS
   visualization_msgs
   dynamic_reconfigure
   eigen_conversions
-  nlink_example
+  # nlink_example
   tf2 
   tf2_ros 
   tf2_geometry_msgs
@@ -101,7 +101,7 @@ link_directories(
 # add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 add_executable(${PROJECT_NAME}_node src/main.cpp)
-add_dependencies(${PROJECT_NAME}_node ${PROJECT_NAME}_gencfg nlink_example_gencpp)
+add_dependencies(${PROJECT_NAME}_node ${PROJECT_NAME}_gencfg)
 # set_target_properties(${PROJECT_NAME}_node PROPERTIES OUTPUT_NAME node PREFIX "")
 
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
