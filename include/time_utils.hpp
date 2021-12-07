@@ -43,6 +43,7 @@ inline double getCameraTimestampfromFileName(string name)
 {
     return string2time(name.substr(11, 16));
 }
+// 输出为ms
 namespace tic
 {
     // 计时

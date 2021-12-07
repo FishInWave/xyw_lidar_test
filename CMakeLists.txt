@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.0.2)
 project(xyw_lidar_test)
-
+add_definitions(-DPROJECT_PATH="${PROJECT_SOURCE_DIR}")
 ## Compile as C++11, supported in ROS Kinetic and newer
 add_compile_options(-std=c++14)
 SET(CMAKE_BUILD_TYPE "Debug")

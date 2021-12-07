@@ -13,6 +13,7 @@ set(CMAKE_TARGET_DEFINITIONS_CXX
   "CERES_EXPORT_INTERNAL_SYMBOLS"
   "CERES_ON"
   "GFLAGS_IS_A_DLL=0"
+  "PROJECT_PATH=\"/home/xyw/catkin_ws/src/xyw_lidar_test\""
   "QT_CORE_LIB"
   "QT_GUI_LIB"
   "QT_WIDGETS_LIB"

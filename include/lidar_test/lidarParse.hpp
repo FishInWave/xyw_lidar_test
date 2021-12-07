@@ -41,7 +41,7 @@
 // #include <nlink_example/UwbFilter.h>
 #include "xyw_test_include/hello.hpp"
 #include "time_utils.hpp"
-#include <unistd.h> // for path
+#include <unistd.h>      // for path
 #include <ros/package.h> // for path
 #include "rslidar_utils.hpp"
 #include <pcl_conversions/pcl_conversions.h>
@@ -73,9 +73,9 @@ namespace xyw_lidar_test
     public:
         pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_in;
         ros::Publisher vis_pub;
-        ros::Publisher point1_pub,point2_pub;
+        ros::Publisher point1_pub, point2_pub;
         // ros::Publisher nlink_pub;
-        ros::Subscriber points_sub,gpsfix,gpsvel;
+        ros::Subscriber points_sub, gpsfix, gpsvel;
         int c;
         // 该函数证明动态调参程序会在初始化时被调用一次，move_base里这一步会完成默认参数的配置
         // 若rosparam里已经有这个参数，则config调用该参数的值，否则取cfg里的默认值
@@ -100,29 +100,29 @@ namespace xyw_lidar_test
         // 2. 转换遵循ros->pointcloud2->pointT。前两者是二进制存储，第三个是结构明确的类，失败原因应该是按照pcl的intensity定义在RSPointXYZIRT
         //里是找不到intensity的，因为两个定义的类型不一样。
         //3. msg的时间戳是消息到达时间，点时间戳是硬件采集时间，基准不一样。
-        void cloud_callback(sensor_msgs::PointCloud2ConstPtr msg){
-
+        void cloud_callback(sensor_msgs::PointCloud2ConstPtr msg)
+        {
+            static std::set<uint16_t>  ring_set;
             pcl::PointCloud<RsPointXYZIRT>::Ptr cloud(new pcl::PointCloud<RsPointXYZIRT>());
             pcl::PointCloud<pcl::PointXYZI>::Ptr new_cloud(new pcl::PointCloud<pcl::PointXYZI>);
             // 直接根据类型去构造，要求msg和cloud对field的定义一致。
-            pcl::fromROSMsg(*msg,*cloud);
+            pcl::fromROSMsg(*msg, *cloud);
             double begin_time = msg->header.stamp.toSec();
-            // int i = 0;
-            // for(auto point : *cloud){
-            //     LOG(INFO) << point.timestamp - begin_time << endl;
-            //     if(i++ > 1){
-            //         break;
-            //     }
-            // }
+
+            for(auto point : *cloud){
+                if(ring_set.find(point.ring) == ring_set.end()){
+                    cout << point.ring << " angle: " << atan2(point.z,point.x)/M_1_PI*180 << endl;
+                    ring_set.insert(point.ring);
+                }
+            }
             // LOG(INFO) << cloud->back().timestamp - begin_time << endl;
-            LOG(INFO) << cloud->back().timestamp - cloud->front().timestamp << endl;
+            // LOG(INFO) << cloud->back().timestamp - cloud->front().timestamp << endl;
             int index = 3000;
             auto point = cloud->at(index);
             // cout << "x: " << point.x << " y: " << point.y << " z: " << point.z << " intensity: " << (int)point.intensity
-            //  << " ring: " << point.ring << " timestamp: " << point.timestamp 
+            //  << " ring: " << point.ring << " timestamp: " << point.timestamp
             // << endl;
-            
-        
+
             tic::TicToc t;
             t.tic();
             // for(auto point : *cloud){
@@ -135,18 +135,24 @@ namespace xyw_lidar_test
             // }
             cout << t.toc() << endl;
             sensor_msgs::PointCloud2 newcloudmsg;
-            pcl::toROSMsg(*new_cloud,newcloudmsg);
+            pcl::toROSMsg(*new_cloud, newcloudmsg);
             point1_pub.publish(newcloudmsg);
         }
-        void fix_cb(const sensor_msgs::NavSatFixPtr& msg){
+        void fix_cb(const sensor_msgs::NavSatFixPtr &msg)
+        {
             // lock_guard<mutex> lock(data_mutex);
             ROS_INFO_STREAM("fix");
         }
-        void vel_cb(const geometry_msgs::TwistStampedConstPtr& msg){
+        void vel_cb(const geometry_msgs::TwistStampedConstPtr &msg)
+        {
             // lock_guard<mutex> lock(data_mutex);
             this_thread::sleep_for(chrono::milliseconds(1000));
             ROS_INFO_STREAM("vel");
         }
+        lidarParse() = default;
+        ~lidarParse() { 
+            cout <<" hello" << endl;
+            google::ShutdownGoogleLogging(); };
         lidarParse(ros::NodeHandle nh, int argc, char **argv)
         {
             cloud_in.reset(new pcl::PointCloud<pcl::PointXYZI>);
@@ -172,11 +178,11 @@ namespace xyw_lidar_test
             dsrv_ = new dynamic_reconfigure::Server<XYWLidarTestConfig>(ros::NodeHandle("~/cfg"));
             dynamic_reconfigure::Server<XYWLidarTestConfig>::CallbackType cb = boost::bind(&lidarParse::reconfigureCB, this, _1, _2);
             dsrv_->setCallback(cb);
-            points_sub = nh.subscribe("/rslidar_points",10,&lidarParse::cloud_callback,this);
+            points_sub = nh.subscribe("/rslidar_points", 10, &lidarParse::cloud_callback, this);
             // nlink_pub = nh.advertise<nlink_parser::LinktrackAoaNodeframe0>("/nlink_linktrack_aoa_nodeframe0", 10);
             // nlink_example::UwbFilter msg;
-            gpsfix = nh.subscribe("/gps/fix",10,&lidarParse::fix_cb,this);
-            gpsvel = nh.subscribe("/gps/vel",10,&lidarParse::vel_cb,this);
+            gpsfix = nh.subscribe("/gps/fix", 10, &lidarParse::fix_cb, this);
+            gpsvel = nh.subscribe("/gps/vel", 10, &lidarParse::vel_cb, this);
 
             // testKDtree();
             // testPointCloudTransform();
@@ -208,61 +214,86 @@ namespace xyw_lidar_test
             // testSlerp();
             // testEulerAndAngles();
             // testMultiSpin();
-            // testKITTIsync();
+            testKITTIsync();
             // testEigenAffineAndTransform();
+            // calculate();
+            // testTictoc();
+        }
+        //单位是ms
+        void testTictoc(){
+            tic::TicTocPart tictoc;
+            tictoc.tic();
+            this_thread::sleep_for(chrono::milliseconds(10));
+            cout << tictoc.tocEnd() << endl;
+        }
+        void calculate()
+        {
+            // I2L
+            // Eigen::Quaterniond q(0.999995291233, -0.000827921146993, 0.00112543266732, -0.0027323034592);
+            Eigen::Affine3f I2L = pcl::getTransformation(1.13384811, -0.352672751, 0.03,-7.2136494e-3,-6.50132987e-3,-7.19614353e-2);
+            Eigen::Matrix4f L2I = I2L.matrix().inverse();
+            cout << L2I.matrix() << fixed << setprecision(10) << endl;
         }
         // 结论：Affine是4*3矩阵，可以通过.matix方法得到4*4矩阵，pcl的transform是根据传统的rpy计算方式得到的
-        void testEigenAffineAndTransform(){
-            float x = 1,y = 2, z = 3, r = 0.5 , p = 0.6 , ya = 0.7;
-            Eigen::Affine3f af = pcl::getTransformation(x,y,z,r,p,ya);
+        void testEigenAffineAndTransform()
+        {
+            float x = 1, y = 2, z = 3, r = 0.5, p = 0.6, ya = 0.7;
+            Eigen::Affine3f af = pcl::getTransformation(x, y, z, r, p, ya);
             Eigen::Isometry3d is(af.matrix().cast<double>());
             cout << is.matrix() << endl;
             Eigen::Matrix4d m;
-            m.block<3,3>(0,0) = Eigen::Matrix3d(Eigen::AngleAxisd(0.7,Eigen::Vector3d(0,0,1))*
-            Eigen::AngleAxisd(0.6,Eigen::Vector3d(0,1,0))*
-            Eigen::AngleAxisd(0.5,Eigen::Vector3d(1,0,0)));
-            m.block<4,1>(0,3) = Eigen::Vector4d(1,2,3,1);
-            cout << "matrix:\n" << m << endl;
+            m.block<3, 3>(0, 0) = Eigen::Matrix3d(Eigen::AngleAxisd(0.7, Eigen::Vector3d(0, 0, 1)) *
+                                                  Eigen::AngleAxisd(0.6, Eigen::Vector3d(0, 1, 0)) *
+                                                  Eigen::AngleAxisd(0.5, Eigen::Vector3d(1, 0, 0)));
+            m.block<4, 1>(0, 3) = Eigen::Vector4d(1, 2, 3, 1);
+            cout << "matrix:\n"
+                 << m << endl;
         }
-        // 结论：kitti的sync并没有被校准，依然需要运动补偿,sync和extract基本一样。
-        void testKITTIsync(){
-            std::string odompath = "/home/xyw/Downloads/0000000003.txt";
-            std::vector<Eigen::Vector3f> odom_points,sync_points;
-            pcl::PointCloud<pcl::PointXYZI> odom = getPointCloudFromTxt(odompath,"odom",odom_points);
-            pcl::PointCloud<pcl::PointXYZI> sync = getPointCloudFromBin("/home/xyw/Downloads/0000000000.bin","sync",sync_points);
+        // 结论：kitti的sync并没有被校准，依然需要运动补偿,sync和extract基本一样。且odom和sync的差别巨大，修正距离超过5cm的超过四分之三。
+        void testKITTIsync()
+        {
+            std::string odompath = "/home/xyw/Downloads/0000002988.bin";
+            std::vector<Eigen::Vector3f> odom_points, sync_points;
+            pcl::PointCloud<pcl::PointXYZI> odom = getPointCloudFromBin(odompath, "odom", odom_points);
+            pcl::PointCloud<pcl::PointXYZI> sync = getPointCloudFromBin("/home/xyw/Downloads/002988.bin", "sync", sync_points);
             odom.header.frame_id = "map";
             sync.header.frame_id = "map";
-            
-            if(odom.size() != sync.size()){
+
+            if (odom.size() != sync.size())
+            {
                 cout << "the size of odom and sync is different." << endl;
             }
             int i = 0;
             int count = 0;
             int valid = 0;
-            while(i++ < odom.size()){
-                if(!isNanPoint(odom_points[i]) && !isNanPoint(sync_points[i])){
-                    float dis = disBetweenPoints(odom_points[i],sync_points[i]);
+            while (i++ < odom.size())
+            {
+                if (!isNanPoint(odom_points[i]) && !isNanPoint(sync_points[i]))
+                {
+                    float dis = disBetweenPoints(odom_points[i], sync_points[i]);
                     valid++;
-                    if(dis > 0.05)
+                    if (dis > 0.05)
                     {
                         count++;
                         cout << dis << " " << flush;
                     }
-                }else{
-                    ROS_WARN_NAMED("warn","nan");
+                }
+                else
+                {
+                    ROS_WARN_NAMED("warn", "nan");
                 }
             }
             cout << count << "/" << valid << endl;
-        //  sensor_msgs::PointCloud2 odommsg;
-        //  pcl::toROSMsg(odom,odommsg);
-        //  sensor_msgs::PointCloud2 syncmsg;
-        //  pcl::toROSMsg(sync,syncmsg);
+            //  sensor_msgs::PointCloud2 odommsg;
+            //  pcl::toROSMsg(odom,odommsg);
+            //  sensor_msgs::PointCloud2 syncmsg;
+            //  pcl::toROSMsg(sync,syncmsg);
 
             point1_pub.publish(odom);
             point2_pub.publish(sync);
         }
 
-        # if 0
+#if 0
         void testMultiSpin(){
             // fix和vel的消息同频率播放；
             // 若multispinner会使得cb被多线程回调，则可以看到fix 10Hz，vel 1Hz
@@ -1050,8 +1081,7 @@ namespace xyw_lidar_test
             LOG(INFO) << "OMP implement for large loop spend time(should be 100 times that of B):\n "
                       << time_used.count() * 1000 << " ms";
         }
-        lidarParse() = default;
-        ~lidarParse() { google::ShutdownGoogleLogging(); };
-    # endif
+
+#endif
     };
 }
