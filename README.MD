@@ -62,6 +62,8 @@
 33. `testKITTIsync`: 经测试，KITTI sync raw data的点云没有做运动补偿，且gt和sync的差别巨大，修正距离超过5cm的超过四分之三。
 34. `testEigenAffineAndTransform`:Affine是4*3矩阵，可以调用matrix方法得到4*4矩阵，pcl的getTransformation方法的形参为rpy，相当于Rz*Ry*Rx;
 35. `calculate`: 用于进行刚体变换
+36. `testTictoc`: 测试Tictoc类的输出单位，验证是ms，duration默认的是s
+37. `testSwitch`: 有return后，直接结束整个函数，因此不需要break；
 # 测试切换方式
 取消相应函数的注释，然后重新编译运行即可。
 运行：
@@ -77,4 +79,5 @@ roslaunch xyw_lidar_test xyw_start.launch
 2021-09-25 增加了31
 2021-11-4 增加了32
 2021-11-6 增加了33-34
-2021-1116 增加了35
+2021-11-16 增加了35
+2021-12-14 增加了36-37

@@ -214,10 +214,22 @@ namespace xyw_lidar_test
             // testSlerp();
             // testEulerAndAngles();
             // testMultiSpin();
-            testKITTIsync();
+            // testKITTIsync();
             // testEigenAffineAndTransform();
             // calculate();
             // testTictoc();
+            cout << testSwitch() << endl;
+        }
+        // return则不需要break
+        int testSwitch(){
+            int icon = 1;
+            switch(icon){
+                case 1:
+                    return 1;
+                case 2:
+                    return 2;
+            }
+            return 3;
         }
         //单位是ms
         void testTictoc(){
