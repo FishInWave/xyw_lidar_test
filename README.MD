@@ -64,20 +64,10 @@
 35. `calculate`: 用于进行刚体变换
 36. `testTictoc`: 测试Tictoc类的输出单位，验证是ms，duration默认的是s
 37. `testSwitch`: 有return后，直接结束整个函数，因此不需要break；
+38.  `testEnumClass`: 测试c++11新特性 enum class和switch的用法
 # 测试切换方式
 取消相应函数的注释，然后重新编译运行即可。
 运行：
 ```
 roslaunch xyw_lidar_test xyw_start.launch
 ```
-
-# 修改记录
-2021-7-26 22:30 添加了README.MD，并加入了对动态调参以及句柄的测试。
-2021-8-3 22:26添加了对多线程lock，vector内存回收和eigen_conversions的测试。
-2021-08-11 16:57:26 增加26.27
-2021-09-11 增加了28-30
-2021-09-25 增加了31
-2021-11-4 增加了32
-2021-11-6 增加了33-34
-2021-11-16 增加了35
-2021-12-14 增加了36-37

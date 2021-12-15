@@ -39,7 +39,6 @@
 #include <tf/tf.h>
 // #include <nlink_parser/LinktrackAoaNodeframe0.h>
 // #include <nlink_example/UwbFilter.h>
-#include "xyw_test_include/hello.hpp"
 #include "time_utils.hpp"
 #include <unistd.h>      // for path
 #include <ros/package.h> // for path
@@ -52,6 +51,7 @@ using PointT = pcl::PointXYZI;
 using PointCloud = pcl::PointCloud<PointT>;
 namespace xyw_lidar_test
 {
+    enum class LSQ{G,L,N};
     class lidarParse
     {
     private:
@@ -76,6 +76,7 @@ namespace xyw_lidar_test
         ros::Publisher point1_pub, point2_pub;
         // ros::Publisher nlink_pub;
         ros::Subscriber points_sub, gpsfix, gpsvel;
+        LSQ type_;
         int c;
         // 该函数证明动态调参程序会在初始化时被调用一次，move_base里这一步会完成默认参数的配置
         // 若rosparam里已经有这个参数，则config调用该参数的值，否则取cfg里的默认值
@@ -153,7 +154,7 @@ namespace xyw_lidar_test
         ~lidarParse() { 
             cout <<" hello" << endl;
             google::ShutdownGoogleLogging(); };
-        lidarParse(ros::NodeHandle nh, int argc, char **argv)
+        lidarParse(ros::NodeHandle nh, int argc, char **argv):type_(LSQ::G)
         {
             cloud_in.reset(new pcl::PointCloud<pcl::PointXYZI>);
             // 初始化GLOG
@@ -218,7 +219,30 @@ namespace xyw_lidar_test
             // testEigenAffineAndTransform();
             // calculate();
             // testTictoc();
-            cout << testSwitch() << endl;
+            // cout << testSwitch() << endl;
+            testEnumClass();
+        }
+        void setType(LSQ type){
+            type_ = type;
+        }
+        void testEnumClass(){
+            switch(type_){
+                case LSQ::G:
+                {
+                    cout << "G" << endl;
+                    break;
+                }
+                case LSQ::L:
+                {
+                    cout << "L" << endl;
+                    break;
+                }
+                case LSQ::N:
+                {
+                    cout << "N" << endl;
+                    break;
+                }
+            }
         }
         // return则不需要break
         int testSwitch(){
