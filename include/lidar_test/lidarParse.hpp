@@ -45,6 +45,7 @@
 #include "rslidar_utils.hpp"
 #include <pcl_conversions/pcl_conversions.h>
 #include "KITTI_helper.hpp"
+#include "so3/so3.hpp"
 using namespace std;
 
 using PointT = pcl::PointXYZI;
@@ -220,7 +221,17 @@ namespace xyw_lidar_test
             // calculate();
             // testTictoc();
             // cout << testSwitch() << endl;
-            testEnumClass();
+            // testEnumClass();
+            testSO3();
+        }
+        void testSO3(){
+            Eigen::Vector3d v(20,4,15);
+            Eigen::Quaterniond q_so3 = fast_gicp::so3_exp(v);
+            Eigen::AngleAxisd angle_axisd(v.norm(),v.normalized());
+            Eigen::Quaterniond q(angle_axisd);
+            cout << "so3 vector: " << v.transpose()  
+            << "\nq_so3: " << q_so3.coeffs().transpose() 
+            << "\nq_eigen: " << q.coeffs().transpose() << endl;
         }
         void setType(LSQ type){
             type_ = type;
@@ -328,8 +339,6 @@ namespace xyw_lidar_test
             point1_pub.publish(odom);
             point2_pub.publish(sync);
         }
-
-#if 0
         void testMultiSpin(){
             // fix和vel的消息同频率播放；
             // 若multispinner会使得cb被多线程回调，则可以看到fix 10Hz，vel 1Hz
@@ -339,29 +348,32 @@ namespace xyw_lidar_test
             // 而多线程情况下，我们无法确定哪个线程会更早被唤起，即便他们都已经就绪。
         }
         // 经过测试，轴角在5°以内的话，与欧拉角的差距在0.05°左右。
+        // 且与欧拉角的拆解顺序无关，轴角的第一分量与x轴欧拉角一致，其余分量依次类推。
         void testEulerAndAngles(){
-            while(ros::ok()){
             double v1,v2,v3,a;
             cout << "输入v1,v2,v3,a." << endl;
             cin >> v1 >> v2 >> v3 >> a;
             Eigen::Vector3d v(v1,v2,v3);
-            Eigen::AngleAxisd angle(a,v.normalized());
-            Eigen::Matrix3d m(angle);
-            Eigen::Quaterniond q(angle);
-            Eigen::Matrix3d mm(q);
-            auto euler1 = m.eulerAngles(0,1,2);
+            Eigen::AngleAxisd angle(a,v.normalized()); // 轴角
+            Eigen::Matrix3d m(angle); // 轴角的矩阵
+            Eigen::Quaterniond q(angle); // 轴角的四元数
+            Eigen::Matrix3d mm(q); // 轴角的四元数的矩阵
+            auto euler1 = m.eulerAngles(0,1,2); // 按照 x,y,z的顺序解出欧拉角
             // Eigen::Matrix3d mm = Eigen::AngleAxisd(euler1[2],Eigen::Vector3d::UnitZ()).toRotationMatrix()* Eigen::AngleAxisd(euler1[1],Eigen::Vector3d::UnitY()).toRotationMatrix() 
             //     * Eigen::AngleAxisd(euler1[0],Eigen::Vector3d::UnitX()).toRotationMatrix();
             Eigen::Matrix3d mmm = Eigen::AngleAxisd(euler1[0],Eigen::Vector3d::UnitX()).toRotationMatrix()
                 * Eigen::AngleAxisd(euler1[1],Eigen::Vector3d::UnitY()).toRotationMatrix()
                 * Eigen::AngleAxisd(euler1[2],Eigen::Vector3d::UnitZ()).toRotationMatrix();
-            auto euler2 = m.eulerAngles(2,1,0);
-            // cout << "axles: " << v.normalized().transpose() * a /M_PI*180.0
-            // << "\n" << "euler1: " << euler1.transpose()/M_PI*180.0  
-            // << "\n" << "euler2: " << euler2.transpose()/M_PI*180.0 <<endl; 
-            cout << "m: \n" << m << "\nmm: \n" << mm << "\nmmm: \n" << mmm << endl;
-            }
-            
+            auto euler2 = m.eulerAngles(2,1,0); // 按照 z,y,x的顺序解出欧拉角
+            auto euler3 = m.eulerAngles(1,2,0); // 按照 y,z,x的顺序解出欧拉角
+            auto euler4 = m.eulerAngles(0,1,0); // 按照 z,y,x的顺序解出欧拉角
+            cout << "axles: " << v.normalized().transpose() * a /M_PI*180.0
+            << "\n" << "euler1: " << euler1.transpose()/M_PI*180.0  
+            << "\n" << "euler2: " << euler2.transpose()/M_PI*180.0 
+            << "\n" << "euler3: " << euler3.transpose()/M_PI*180.0
+            << "\n" << "euler4: " << euler4.transpose()/M_PI*180.0
+            <<endl; 
+            cout << "angles->matrix : \n" << m << "\n angle->q->matrix: \n" << mm << "\n matrix->euler->matrix: \n" << mmm << endl;   
         }
         // 与wiki一致，t表示与后者的接近程度。
         void testSlerp(){
@@ -454,7 +466,6 @@ namespace xyw_lidar_test
         // 无论使用""还是<>
         void testIncludeOrder()
         {
-            xyw::printHello();
         }
         void testEigenConvert()
         {
@@ -591,7 +602,7 @@ namespace xyw_lidar_test
             }
             sensor_msgs::PointCloud2 pc;
             temp.header.frame_id = "map";
-            point_pub.publish(temp);
+            // point_pub.publish(temp);
             cout << "一个点云：" << cloud_in->size() << endl;
             cout << "三个点云：　" << temp.size() << endl;
             pcl::io::savePCDFile("/tmp/pc.pcd", temp);
@@ -873,41 +884,6 @@ namespace xyw_lidar_test
                       << "\n"
                       << m << "\n";
         }
-        //实验证明：小角近似定理是针对欧拉角的，而不是轴角，见《语雀-刚体变换及雅可比矩阵求解》
-        void testAngleAxlesAndEulerAngle()
-        {
-            Eigen::Vector3d axles(3, 4, 5);
-            Eigen::Vector3d normed = axles.normalized();
-            double angle = M_PI / 180 / 40; // 0.5°
-            Eigen::AngleAxisd ag(angle, normed);
-            Eigen::Matrix3d om(ag.matrix());
-            Eigen::Vector3d abc_normed = sqrt(angle) * normed;
-            Eigen::Vector3d abc = sqrt(angle) * axles;
-            LOG(INFO) << "agnle: " << angle << " axle： " << axles.transpose();
-            // 没有归一化的矩阵
-            Eigen::AngleAxisd Rx(abc[0], Eigen::Vector3d(1, 0, 0));
-            Eigen::AngleAxisd Ry(abc[1], Eigen::Vector3d(0, 1, 0));
-            Eigen::AngleAxisd Rz(abc[2], Eigen::Vector3d(0, 0, 1));
-
-            // 归一化以后的欧拉角
-            Rx = Eigen::AngleAxisd(abc_normed[0], Eigen::Vector3d(1, 0, 0));
-            Ry = Eigen::AngleAxisd(abc_normed[1], Eigen::Vector3d(0, 1, 0));
-            Rz = Eigen::AngleAxisd(abc_normed[2], Eigen::Vector3d(0, 0, 1));
-            Eigen::Matrix3d mm = (Rz.matrix().transpose()) * (Ry.matrix().transpose()) * (Rx.matrix().transpose());
-            Eigen::Matrix3d m = Rx.matrix() * Ry.matrix() * Rz.matrix();
-
-            LOG(INFO) << "AngleAxisd matrix: "
-                      << "\n"
-                      << om << "\n"
-                      << "AngleAxisd vector: " << abc.transpose() << "\n"
-                      << "Angle Axis normed: " << abc_normed.transpose() << "\n"
-                      << "Euler Angle matrix(with angleaxis vector): "
-                      << "\n"
-                      << m << "\n"
-                      << " Euler Angle matrix: "
-                      << "\n"
-                      << m * mm;
-        }
         // 测试Eigen的norm
         // norm返回二范数值，normlized返回归一化后的m的拷贝，normlize对m本体进行归一化
         void testMatrixNorm()
@@ -1015,6 +991,10 @@ namespace xyw_lidar_test
             m(1, 0) = -4;
             LOG(INFO) << "abs: " << m.array().abs();
             LOG(INFO) << "matrix: " << m;
+
+            Eigen::Vector3d v(3,4,-10);
+            cout << v.maxCoeff() << endl;
+            cout << v.array().abs().maxCoeff() << endl;
         }
         // Isometry3d可以和vector3d进行运算，且float类型可以通过cast转换为double
         void testEigenVectorDir()
@@ -1118,6 +1098,5 @@ namespace xyw_lidar_test
                       << time_used.count() * 1000 << " ms";
         }
 
-#endif
     };
 }

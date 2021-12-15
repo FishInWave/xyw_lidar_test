@@ -11,7 +11,7 @@ int main(int argc, char **argv)
     {
 
         ros::spinOnce();
-        lp.testEnumClass();
+        // lp.testEnumClass();
         f.sleep();
     }
     // ros::MultiThreadedSpinner spinner(4);

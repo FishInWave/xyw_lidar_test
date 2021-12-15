@@ -28,8 +28,8 @@
 10. 由于Ceres出bug因此测试Eigen里基于泛型的类型初始化：testEigenTemplate
 11. 测试Eigen的norm计算：testMartixNorm\
 答：norm返回二范数值，normlized返回归一化后的m的拷贝，normlize对m本体进行归一化。
-12. 测试小角近似里的$\alpha,\beta,\gamma$是轴角还是欧拉角：testAngleAxlesAndEulerAngle\
-答：实验证明：小角近似定理是针对欧拉角的，而不是轴角，详见《语雀-刚体变换及雅可比矩阵求解》。理论原因：小角近似定理来自于旋转矩阵，其变量本身就是欧拉角。
+12. ~~测试小角近似里的$\alpha,\beta,\gamma$是轴角还是欧拉角：testAngleAxlesAndEulerAngle\
+答：实验证明：小角近似定理是针对欧拉角的，而不是轴角，详见《语雀-刚体变换及雅可比矩阵求解》。理论原因：小角近似定理来自于旋转矩阵，其变量本身就是欧拉角。~~ 小角情况下，轴角等于欧拉角。
 13. 测试Ceres里的rotation的排列：testCeresTransform\
 答：ceres::QuaternionToRotation里rotation是按行排列的。
 14. 测试Cholesky分解的用法：testLLT\
@@ -65,6 +65,7 @@
 36. `testTictoc`: 测试Tictoc类的输出单位，验证是ms，duration默认的是s
 37. `testSwitch`: 有return后，直接结束整个函数，因此不需要break；
 38.  `testEnumClass`: 测试c++11新特性 enum class和switch的用法
+39. `testSO3`: 验证fast-gicp里的SO3运算，其实等价于Eigen里轴角到四元数的转换
 # 测试切换方式
 取消相应函数的注释，然后重新编译运行即可。
 运行：
