@@ -218,11 +218,11 @@ namespace xyw_lidar_test
             // testMultiSpin();
             // testKITTIsync();
             // testEigenAffineAndTransform();
-            // calculate();
+            calculate();
             // testTictoc();
             // cout << testSwitch() << endl;
             // testEnumClass();
-            testSO3();
+            // testSO3();
         }
         void testSO3(){
             Eigen::Vector3d v(20,4,15);
@@ -277,9 +277,10 @@ namespace xyw_lidar_test
         {
             // I2L
             // Eigen::Quaterniond q(0.999995291233, -0.000827921146993, 0.00112543266732, -0.0027323034592);
-            Eigen::Affine3f I2L = pcl::getTransformation(1.13384811, -0.352672751, 0.03,-7.2136494e-3,-6.50132987e-3,-7.19614353e-2);
-            Eigen::Matrix4f L2I = I2L.matrix().inverse();
-            cout << L2I.matrix() << fixed << setprecision(10) << endl;
+            Eigen::Matrix4d f,b;
+            f << -0.995737 ,-0.0836142, -0.0389382, 375.15, 0.0827038, -0.996275, 0.024434, -142.186, -0.0408361, 0.0211095, 0.998943, 13.3424,0,0,0,1;
+            b << -0.997021, -0.0658499 ,-0.0401468 ,374.553, 0.0648759, -0.997578 ,0.0251007 ,-142.154 ,-0.0417024, 0.0224214, 0.998878 ,13.3233,0,0,0,1;
+            cout << f.inverse()*b << fixed << setprecision(10) << endl;
         }
         // 结论：Affine是4*3矩阵，可以通过.matix方法得到4*4矩阵，pcl的transform是根据传统的rpy计算方式得到的
         void testEigenAffineAndTransform()
