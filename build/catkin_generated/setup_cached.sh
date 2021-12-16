@@ -9,7 +9,6 @@
 # modified environment variables
 export CMAKE_PREFIX_PATH="/home/xyw/catkin_ws/src/xyw_lidar_test/build/devel:$CMAKE_PREFIX_PATH"
 export LD_LIBRARY_PATH="/home/xyw/catkin_ws/src/xyw_lidar_test/build/devel/lib:$LD_LIBRARY_PATH"
-export PATH="/opt/ros/melodic/bin:$PATH"
 export PKG_CONFIG_PATH="/home/xyw/catkin_ws/src/xyw_lidar_test/build/devel/lib/pkgconfig:$PKG_CONFIG_PATH"
 export PWD='/home/xyw/catkin_ws/src/xyw_lidar_test/build'
 export PYTHONPATH="/home/xyw/catkin_ws/src/xyw_lidar_test/build/devel/lib/python2.7/dist-packages:$PYTHONPATH"
