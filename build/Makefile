@@ -168,6 +168,19 @@ depend:
 .PHONY : depend
 
 #=============================================================================
+# Target rules for targets named classTest
+
+# Build rule for target.
+classTest: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 classTest
+.PHONY : classTest
+
+# fast build rule for target.
+classTest/fast:
+	$(MAKE) -f CMakeFiles/classTest.dir/build.make CMakeFiles/classTest.dir/build
+.PHONY : classTest/fast
+
+#=============================================================================
 # Target rules for targets named xyw_lidar_test_generate_messages_py
 
 # Build rule for target.
@@ -1272,6 +1285,33 @@ gtest/fast:
 	$(MAKE) -f gtest/googlemock/gtest/CMakeFiles/gtest.dir/build.make gtest/googlemock/gtest/CMakeFiles/gtest.dir/build
 .PHONY : gtest/fast
 
+src/classTest.o: src/classTest.cpp.o
+
+.PHONY : src/classTest.o
+
+# target to build an object file
+src/classTest.cpp.o:
+	$(MAKE) -f CMakeFiles/classTest.dir/build.make CMakeFiles/classTest.dir/src/classTest.cpp.o
+.PHONY : src/classTest.cpp.o
+
+src/classTest.i: src/classTest.cpp.i
+
+.PHONY : src/classTest.i
+
+# target to preprocess a source file
+src/classTest.cpp.i:
+	$(MAKE) -f CMakeFiles/classTest.dir/build.make CMakeFiles/classTest.dir/src/classTest.cpp.i
+.PHONY : src/classTest.cpp.i
+
+src/classTest.s: src/classTest.cpp.s
+
+.PHONY : src/classTest.s
+
+# target to generate assembly for a file
+src/classTest.cpp.s:
+	$(MAKE) -f CMakeFiles/classTest.dir/build.make CMakeFiles/classTest.dir/src/classTest.cpp.s
+.PHONY : src/classTest.cpp.s
+
 src/main.o: src/main.cpp.o
 
 .PHONY : src/main.o
@@ -1309,6 +1349,7 @@ help:
 	@echo "... install/local"
 	@echo "... install"
 	@echo "... list_install_components"
+	@echo "... classTest"
 	@echo "... xyw_lidar_test_generate_messages_py"
 	@echo "... geometry_msgs_generate_messages_py"
 	@echo "... geometry_msgs_generate_messages_lisp"
@@ -1397,6 +1438,9 @@ help:
 	@echo "... gmock"
 	@echo "... gtest_main"
 	@echo "... gtest"
+	@echo "... src/classTest.o"
+	@echo "... src/classTest.i"
+	@echo "... src/classTest.s"
 	@echo "... src/main.o"
 	@echo "... src/main.i"
 	@echo "... src/main.s"

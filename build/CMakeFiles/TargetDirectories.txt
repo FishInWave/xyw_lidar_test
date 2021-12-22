@@ -2,6 +2,7 @@
 /home/xyw/catkin_ws/src/xyw_lidar_test/build/CMakeFiles/install/local.dir
 /home/xyw/catkin_ws/src/xyw_lidar_test/build/CMakeFiles/install.dir
 /home/xyw/catkin_ws/src/xyw_lidar_test/build/CMakeFiles/list_install_components.dir
+/home/xyw/catkin_ws/src/xyw_lidar_test/build/CMakeFiles/classTest.dir
 /home/xyw/catkin_ws/src/xyw_lidar_test/build/CMakeFiles/xyw_lidar_test_generate_messages_py.dir
 /home/xyw/catkin_ws/src/xyw_lidar_test/build/CMakeFiles/geometry_msgs_generate_messages_py.dir
 /home/xyw/catkin_ws/src/xyw_lidar_test/build/CMakeFiles/geometry_msgs_generate_messages_lisp.dir
