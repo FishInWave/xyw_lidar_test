@@ -52,7 +52,12 @@ using PointT = pcl::PointXYZI;
 using PointCloud = pcl::PointCloud<PointT>;
 namespace xyw_lidar_test
 {
-    enum class LSQ{G,L,N};
+    enum class LSQ
+    {
+        G,
+        L,
+        N
+    };
     class lidarParse
     {
     private:
@@ -104,16 +109,18 @@ namespace xyw_lidar_test
         //3. msg的时间戳是消息到达时间，点时间戳是硬件采集时间，基准不一样。
         void cloud_callback(sensor_msgs::PointCloud2ConstPtr msg)
         {
-            static std::set<uint16_t>  ring_set;
+            static std::set<uint16_t> ring_set;
             pcl::PointCloud<RsPointXYZIRT>::Ptr cloud(new pcl::PointCloud<RsPointXYZIRT>());
             pcl::PointCloud<pcl::PointXYZI>::Ptr new_cloud(new pcl::PointCloud<pcl::PointXYZI>);
             // 直接根据类型去构造，要求msg和cloud对field的定义一致。
             pcl::fromROSMsg(*msg, *cloud);
             double begin_time = msg->header.stamp.toSec();
 
-            for(auto point : *cloud){
-                if(ring_set.find(point.ring) == ring_set.end()){
-                    cout << point.ring << " angle: " << atan2(point.z,point.x)/M_1_PI*180 << endl;
+            for (auto point : *cloud)
+            {
+                if (ring_set.find(point.ring) == ring_set.end())
+                {
+                    cout << point.ring << " angle: " << atan2(point.z, point.x) / M_1_PI * 180 << endl;
                     ring_set.insert(point.ring);
                 }
             }
@@ -152,10 +159,12 @@ namespace xyw_lidar_test
             ROS_INFO_STREAM("vel");
         }
         lidarParse() = default;
-        ~lidarParse() { 
-            cout <<" hello" << endl;
-            google::ShutdownGoogleLogging(); };
-        lidarParse(ros::NodeHandle nh, int argc, char **argv):type_(LSQ::G)
+        ~lidarParse()
+        {
+            cout << " hello" << endl;
+            google::ShutdownGoogleLogging();
+        };
+        lidarParse(ros::NodeHandle nh, int argc, char **argv) : type_(LSQ::G)
         {
             cloud_in.reset(new pcl::PointCloud<pcl::PointXYZI>);
             // 初始化GLOG
@@ -223,58 +232,83 @@ namespace xyw_lidar_test
             // cout << testSwitch() << endl;
             // testEnumClass();
             // testSO3();
-            testEigenForceTrans();
+            // testEigenForceTrans();
+            testQuateRotate();
+        }
+        // q单位化后和matrix可以置换，没必要做转换。
+        void testQuateRotate()
+        {
+            double a[9] = {1, 2, 3, 4, 5, 6, 9, 4, 9};
+            Eigen::Quaterniond q(a);
+            q.normalize();
+            Eigen::Matrix3d r(q.toRotationMatrix());
+            Eigen::Matrix3d cov(a);
+            cout << (q * cov*q.conjugate()) << endl;
+            cout << (q * cov * q.inverse()) << endl;
+            cout << "---------------------" << endl;
+            cout << (q * cov * q.inverse()) << endl;
+            cout << (r * cov * r.transpose()) << endl;
         }
         // Eigen::Matrix可以用C类型的指针或者数组初始化
-        void testEigenForceTrans(){
-            double a[6] = {1,2,3,4,5,6};
-            Eigen::Matrix<double,3,2> m(a);
+        void testEigenForceTrans()
+        {
+            double a[6] = {1, 2, 3, 4, 5, 6};
+            Eigen::Matrix<double, 3, 2> m(a);
             cout << m << endl;
+            Eigen::Map<Eigen::Quaterniond> q(a);
+            cout << q.w() << endl;
         }
-        void testSO3(){
-            Eigen::Vector3d v(20,4,15);
+        void testSO3()
+        {
+            Eigen::Vector3d v(20, 4, 15);
             Eigen::Quaterniond q_so3 = fast_gicp::so3_exp(v);
-            Eigen::AngleAxisd angle_axisd(v.norm(),v.normalized());
+            Eigen::AngleAxisd angle_axisd(v.norm(), v.normalized());
             Eigen::Quaterniond q(angle_axisd);
-            cout << "so3 vector: " << v.transpose()  
-            << "\nq_so3: " << q_so3.coeffs().transpose() 
-            << "\nq_eigen: " << q.coeffs().transpose() << endl;
+            cout << "so3 vector: " << v.transpose()
+                 << "\nq_so3: " << q_so3.coeffs().transpose()
+                 << "\nq_eigen: " << q.coeffs().transpose() << endl;
         }
-        void setType(LSQ type){
+        void setType(LSQ type)
+        {
             type_ = type;
         }
-        void testEnumClass(){
-            switch(type_){
-                case LSQ::G:
-                {
-                    cout << "G" << endl;
-                    break;
-                }
-                case LSQ::L:
-                {
-                    cout << "L" << endl;
-                    break;
-                }
-                case LSQ::N:
-                {
-                    cout << "N" << endl;
-                    break;
-                }
+        void testEnumClass()
+        {
+            switch (type_)
+            {
+            case LSQ::G:
+            {
+                cout << "G" << endl;
+                break;
+            }
+            case LSQ::L:
+            {
+                cout << "L" << endl;
+                break;
+            }
+            case LSQ::N:
+            {
+                cout << "N" << endl;
+                break;
+            }
             }
         }
         // return则不需要break
-        int testSwitch(){
+        int testSwitch()
+        {
             int icon = 1;
-            switch(icon){
-                case 1:
-                    return 1;
-                case 2:
-                    return 2;
+            switch (icon)
+            {
+            case 1:
+                return 1;
+            case 2:
+                return 2;
             }
             return 3;
         }
         //单位是ms
-        void testTictoc(){
+        void testTictoc()
+        {
             tic::TicTocPart tictoc;
             tictoc.tic();
             this_thread::sleep_for(chrono::milliseconds(10));
@@ -284,7 +318,7 @@ namespace xyw_lidar_test
         // {
         //     // I2L
         //     // Eigen::Quaterniond q(0.999995291233, -0.000827921146993, 0.00112543266732, -0.0027323034592);
-            
+
         //     cout << f.inverse()*b << fixed << setprecision(10) << endl;
         // }
         // 结论：Affine是4*3矩阵，可以通过.matix方法得到4*4矩阵，pcl的transform是根据传统的rpy计算方式得到的
@@ -345,7 +379,8 @@ namespace xyw_lidar_test
             point1_pub.publish(odom);
             point2_pub.publish(sync);
         }
-        void testMultiSpin(){
+        void testMultiSpin()
+        {
             // fix和vel的消息同频率播放；
             // 若multispinner会使得cb被多线程回调，则可以看到fix 10Hz，vel 1Hz
             // 若spinner会使cb被单线程回调，则可以看到 fix和vel交替进行；
@@ -355,61 +390,69 @@ namespace xyw_lidar_test
         }
         // 经过测试，轴角在5°以内的话，与欧拉角的差距在0.05°左右。
         // 且与欧拉角的拆解顺序无关，轴角的第一分量与x轴欧拉角一致，其余分量依次类推。
-        void testEulerAndAngles(){
-            double v1,v2,v3,a;
+        void testEulerAndAngles()
+        {
+            double v1, v2, v3, a;
             cout << "输入v1,v2,v3,a." << endl;
             cin >> v1 >> v2 >> v3 >> a;
-            Eigen::Vector3d v(v1,v2,v3);
-            Eigen::AngleAxisd angle(a,v.normalized()); // 轴角
-            Eigen::Matrix3d m(angle); // 轴角的矩阵
-            Eigen::Quaterniond q(angle); // 轴角的四元数
-            Eigen::Matrix3d mm(q); // 轴角的四元数的矩阵
-            auto euler1 = m.eulerAngles(0,1,2); // 按照 x,y,z的顺序解出欧拉角
-            // Eigen::Matrix3d mm = Eigen::AngleAxisd(euler1[2],Eigen::Vector3d::UnitZ()).toRotationMatrix()* Eigen::AngleAxisd(euler1[1],Eigen::Vector3d::UnitY()).toRotationMatrix() 
+            Eigen::Vector3d v(v1, v2, v3);
+            Eigen::AngleAxisd angle(a, v.normalized()); // 轴角
+            Eigen::Matrix3d m(angle);                   // 轴角的矩阵
+            Eigen::Quaterniond q(angle);                // 轴角的四元数
+            Eigen::Matrix3d mm(q);                      // 轴角的四元数的矩阵
+            auto euler1 = m.eulerAngles(0, 1, 2);       // 按照 x,y,z的顺序解出欧拉角
+            // Eigen::Matrix3d mm = Eigen::AngleAxisd(euler1[2],Eigen::Vector3d::UnitZ()).toRotationMatrix()* Eigen::AngleAxisd(euler1[1],Eigen::Vector3d::UnitY()).toRotationMatrix()
             //     * Eigen::AngleAxisd(euler1[0],Eigen::Vector3d::UnitX()).toRotationMatrix();
-            Eigen::Matrix3d mmm = Eigen::AngleAxisd(euler1[0],Eigen::Vector3d::UnitX()).toRotationMatrix()
-                * Eigen::AngleAxisd(euler1[1],Eigen::Vector3d::UnitY()).toRotationMatrix()
-                * Eigen::AngleAxisd(euler1[2],Eigen::Vector3d::UnitZ()).toRotationMatrix();
-            auto euler2 = m.eulerAngles(2,1,0); // 按照 z,y,x的顺序解出欧拉角
-            auto euler3 = m.eulerAngles(1,2,0); // 按照 y,z,x的顺序解出欧拉角
-            auto euler4 = m.eulerAngles(0,1,0); // 按照 z,y,x的顺序解出欧拉角
-            cout << "axles: " << v.normalized().transpose() * a /M_PI*180.0
-            << "\n" << "euler1: " << euler1.transpose()/M_PI*180.0  
-            << "\n" << "euler2: " << euler2.transpose()/M_PI*180.0 
-            << "\n" << "euler3: " << euler3.transpose()/M_PI*180.0
-            << "\n" << "euler4: " << euler4.transpose()/M_PI*180.0
-            <<endl; 
-            cout << "angles->matrix : \n" << m << "\n angle->q->matrix: \n" << mm << "\n matrix->euler->matrix: \n" << mmm << endl;   
+            Eigen::Matrix3d mmm = Eigen::AngleAxisd(euler1[0], Eigen::Vector3d::UnitX()).toRotationMatrix() * Eigen::AngleAxisd(euler1[1], Eigen::Vector3d::UnitY()).toRotationMatrix() * Eigen::AngleAxisd(euler1[2], Eigen::Vector3d::UnitZ()).toRotationMatrix();
+            auto euler2 = m.eulerAngles(2, 1, 0); // 按照 z,y,x的顺序解出欧拉角
+            auto euler3 = m.eulerAngles(1, 2, 0); // 按照 y,z,x的顺序解出欧拉角
+            auto euler4 = m.eulerAngles(0, 1, 0); // 按照 z,y,x的顺序解出欧拉角
+            cout << "axles: " << v.normalized().transpose() * a / M_PI * 180.0
+                 << "\n"
+                 << "euler1: " << euler1.transpose() / M_PI * 180.0
+                 << "\n"
+                 << "euler2: " << euler2.transpose() / M_PI * 180.0
+                 << "\n"
+                 << "euler3: " << euler3.transpose() / M_PI * 180.0
+                 << "\n"
+                 << "euler4: " << euler4.transpose() / M_PI * 180.0
+                 << endl;
+            cout << "angles->matrix : \n"
+                 << m << "\n angle->q->matrix: \n"
+                 << mm << "\n matrix->euler->matrix: \n"
+                 << mmm << endl;
         }
         // 与wiki一致，t表示与后者的接近程度。
-        void testSlerp(){
-            Eigen::Quaterniond q(1,0,0,0);
-            Eigen::Quaterniond q2(0.5,0.6,0.6,0.6);
+        void testSlerp()
+        {
+            Eigen::Quaterniond q(1, 0, 0, 0);
+            Eigen::Quaterniond q2(0.5, 0.6, 0.6, 0.6);
             q2.normalize();
-            auto q3 = q2.slerp(1.0,q);
+            auto q3 = q2.slerp(1.0, q);
             cout << q3.coeffs() << endl;
         }
         //测试结果：ros 1631339391.843172550
         //     chrono  1631339391.843170881
         // 相差2ms，应该是指令执行的时间，因此可以认为ROS底层就是调的system_clock。
-        void testTimeSDK(){
+        void testTimeSDK()
+        {
             //测试ROS time 和 std::chrono的计时是否一致
             ros::Time t = ros::Time::now();
             auto tp = std::chrono::system_clock::now();
-            
-            double chrono_time = (double) (std::chrono::duration_cast<chrono::duration<double>>(tp.time_since_epoch())).count();
-            double ros_time = double(t.sec)+double(t.nsec)/1000000000.0;
-            cout << "ros time: " << fixed <<  setprecision(9)<<ros_time<<" \n chrono_time: " << fixed << setprecision(9)
-            << chrono_time << endl;
 
+            double chrono_time = (double)(std::chrono::duration_cast<chrono::duration<double>>(tp.time_since_epoch())).count();
+            double ros_time = double(t.sec) + double(t.nsec) / 1000000000.0;
+            cout << "ros time: " << fixed << setprecision(9) << ros_time << " \n chrono_time: " << fixed << setprecision(9)
+                 << chrono_time << endl;
         }
-        
+
         // 测试c++的路径获取,可以使用ros的package，也可使用系统自带的unistd（direct.h好像也有）
-        void testGetPath(){
+        void testGetPath()
+        {
             string path = ros::package::getPath("xyw_lidar_test");
             cout << path << endl;
             char buffer[50];
-            getcwd(buffer,50);
+            getcwd(buffer, 50);
             cout << string(buffer) << endl;
         }
         // 测试tf2的耗时：全过程0.03ms一次，如果mutex仅进行简单赋值0.000156ms。
@@ -998,7 +1041,7 @@ namespace xyw_lidar_test
             LOG(INFO) << "abs: " << m.array().abs();
             LOG(INFO) << "matrix: " << m;
 
-            Eigen::Vector3d v(3,4,-10);
+            Eigen::Vector3d v(3, 4, -10);
             cout << v.maxCoeff() << endl;
             cout << v.array().abs().maxCoeff() << endl;
         }
@@ -1103,6 +1146,5 @@ namespace xyw_lidar_test
             LOG(INFO) << "OMP implement for large loop spend time(should be 100 times that of B):\n "
                       << time_used.count() * 1000 << " ms";
         }
-
     };
 }
