@@ -20,5 +20,6 @@ int main(void)
 {
     A *a = new B();
     a->foo();   // 在这里，a虽然是指向A的指针，但是被调用的函数(foo)却是B的!
+    cerr << "this is error" << endl;
    return 0;
 }

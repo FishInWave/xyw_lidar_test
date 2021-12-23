@@ -66,6 +66,7 @@
 37. `testSwitch`: 有return后，直接结束整个函数，因此不需要break；
 38.  `testEnumClass`: 测试c++11新特性 enum class和switch的用法
 39. `testSO3`: 验证fast-gicp里的SO3运算，其实等价于Eigen里轴角到四元数的转换
+40. `testEigenForceTrans`: Eigen::Matrix可以用C类型的指针或者数组初始化
 # 测试切换方式
 取消相应函数的注释，然后重新编译运行即可。
 运行：

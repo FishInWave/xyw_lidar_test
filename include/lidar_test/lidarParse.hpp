@@ -223,6 +223,13 @@ namespace xyw_lidar_test
             // cout << testSwitch() << endl;
             // testEnumClass();
             // testSO3();
+            testEigenForceTrans();
+        }
+        // Eigen::Matrix可以用C类型的指针或者数组初始化
+        void testEigenForceTrans(){
+            double a[6] = {1,2,3,4,5,6};
+            Eigen::Matrix<double,6,1> m(a);
+            cout << m << endl;
         }
         void testSO3(){
             Eigen::Vector3d v(20,4,15);
