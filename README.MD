@@ -27,7 +27,7 @@
 答：公式正确。
 10. 由于Ceres出bug因此测试Eigen里基于泛型的类型初始化：testEigenTemplate
 11. 测试Eigen的norm计算：testMartixNorm\
-答：norm返回二范数值，normlized返回归一化后的m的拷贝，normlize对m本体进行归一化。
+答：norm返回矩阵F范数值，normlized返回归一化(除以norm_F)后的m的拷贝，normlize对m本体进行归一化。
 12. ~~测试小角近似里的$\alpha,\beta,\gamma$是轴角还是欧拉角：testAngleAxlesAndEulerAngle\
 答：实验证明：小角近似定理是针对欧拉角的，而不是轴角，详见《语雀-刚体变换及雅可比矩阵求解》。理论原因：小角近似定理来自于旋转矩阵，其变量本身就是欧拉角。~~ 小角情况下，轴角等于欧拉角。
 13. 测试Ceres里的rotation的排列：testCeresTransform\

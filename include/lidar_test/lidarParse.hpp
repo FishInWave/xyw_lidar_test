@@ -203,7 +203,7 @@ namespace xyw_lidar_test
             // testGetVector4fMap();
             // testGauss();
             // testEigenTemplate<double>();
-            // testMatrixNorm();
+            testMatrixNorm();
             // testAngleAxlesAndEulerAngle();
             // testCeresTransform();
             // testLLT();
@@ -233,7 +233,7 @@ namespace xyw_lidar_test
             // testEnumClass();
             // testSO3();
             // testEigenForceTrans();
-            testQuateRotate();
+            // testQuateRotate();
         }
         // q单位化后和matrix可以置换，没必要做转换。
         void testQuateRotate()
@@ -934,15 +934,16 @@ namespace xyw_lidar_test
                       << m << "\n";
         }
         // 测试Eigen的norm
-        // norm返回二范数值，normlized返回归一化后的m的拷贝，normlize对m本体进行归一化
+        // norm返回矩阵F范数值，normlized返回归一化后的m的拷贝，normlize对m本体进行归一化
         void testMatrixNorm()
         {
-            Eigen::Matrix3d m;
-            m.setIdentity();
-            m = m * 2;
+            Eigen::Matrix2d m;
+            m << 1,2,3,4;
+            double norm_F = sqrt(1*1+4+9+16);
             LOG(INFO) << "\n"
                       << m
-                      << "\n m.norm()： "
+                      << "\n norm_F: \n"<< norm_F
+                      << "\n m.norm():"
                       << "\n"
                       << m.norm()
                       << "\n m/m.norm(): "
@@ -952,7 +953,7 @@ namespace xyw_lidar_test
                       << "\n"
                       << m.normalized()
                       << "\n m after m.normalized: " << m;
-            m.normalize();
+                      m.normalize();
             LOG(INFO) << "\n m after m.normlize(): " << m;
         }
         // 测试Eigen的泛型初始化
