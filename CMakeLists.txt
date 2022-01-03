@@ -3,7 +3,8 @@ project(xyw_lidar_test)
 add_definitions(-DPROJECT_PATH="${PROJECT_SOURCE_DIR}")
 ## Compile as C++11, supported in ROS Kinetic and newer
 add_compile_options(-std=c++14)
-SET(CMAKE_BUILD_TYPE "Debug")
+# SET(CMAKE_BUILD_TYPE "Release")
+set(CMAKE_CXX_FLAGS_RELEASE "-Og -pthread -march=native -Wunknown-pragmas") 
 LIST(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake_modules")
 find_package(catkin REQUIRED COMPONENTS
   roscpp

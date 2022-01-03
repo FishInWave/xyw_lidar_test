@@ -68,6 +68,8 @@
 39. `testSO3`: 验证fast-gicp里的SO3运算，其实等价于Eigen里轴角到四元数的转换
 40. `testEigenForceTrans`: Eigen::Matrix可以用C类型的指针或者数组初始化
 41. `testQuateRotate`: q单位化后和matrix可以置换，没必要做转换。
+42. `测试类别和计算速度`： O3优化下，点云变换使用数学表达式会比调pcl库更快。
+43. `测试std::map`： 遍历删除有特殊的for写法，不可以用range for，插入根据使用的重载版本，返回值也有不同
 # 测试切换方式
 取消相应函数的注释，然后重新编译运行即可。
 运行：

@@ -60,6 +60,7 @@ namespace xyw_lidar_test
     };
     class lidarParse
     {
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     private:
         dynamic_reconfigure::Server<XYWLidarTestConfig> *dsrv_;
         union TEST
@@ -203,7 +204,7 @@ namespace xyw_lidar_test
             // testGetVector4fMap();
             // testGauss();
             // testEigenTemplate<double>();
-            testMatrixNorm();
+            // testMatrixNorm();
             // testAngleAxlesAndEulerAngle();
             // testCeresTransform();
             // testLLT();
@@ -234,6 +235,59 @@ namespace xyw_lidar_test
             // testSO3();
             // testEigenForceTrans();
             // testQuateRotate();
+            // testApprox();
+            // cout << testEigenTopoint<pcl::PointXYZ>() << endl;
+            testMap();
+        }
+        // map删除需要避免自增，且若要遍历删除必须使用for而不是range for
+        // https://blog.csdn.net/weixin_34258078/article/details/92290970
+        void testMap()
+        {
+            std::map<string, int> map;
+            map["a"] = 1;
+            map["b"] = 2;
+            map["c"] = 3;
+            auto found = map.find("d");
+            // 形参是迭代器和元素，则返回值是指向新元素的迭代器
+            found = map.insert(found, make_pair("d", 4));
+            cout << found->first << " " << found->second << endl;
+            // 形参只有元素，则返回值是个pair(指向新元素的迭代器，bool)，若亦有该元素为false，否则插入成功为true
+            auto f2 = map.insert(make_pair("e", 5));
+            cout << f2.first->first << " " << f2.first->second << " " << f2.second << endl;
+            for (auto i : map)
+            {
+                cout << i.first << " : " << i.second << endl;
+            }
+            for (auto i = map.begin(); i != map.end();)
+            {
+                if (i->second < 3)
+                    map.erase(i++);
+                else
+                {
+                    i++;
+                }
+            }
+            for (auto i : map)
+            {
+                cout << i.first << " : " << i.second << endl;
+            }
+        }
+        template <typename PointT>
+        PointT testEigenTopoint()
+        {
+            Eigen::Vector4d mean{4, 3, 2, 1};
+            return PointT(mean[0], mean[1], mean[2]);
+        }
+        // 测试舍入表达式
+        void testApprox()
+        {
+            Eigen::Vector3d a;
+            a << 1.4, 2.4, 2.9;
+            // 等于四舍五入后 再减1
+            Eigen::Vector3d s = (a.array() - 0.5).floor();
+            Eigen::Vector3d round = a.array().round();
+            cout << s.transpose() << "\n"
+                 << round.transpose() << endl;
         }
         // q单位化后和matrix可以置换，没必要做转换。
         void testQuateRotate()
@@ -243,7 +297,7 @@ namespace xyw_lidar_test
             q.normalize();
             Eigen::Matrix3d r(q.toRotationMatrix());
             Eigen::Matrix3d cov(a);
-            cout << (q * cov*q.conjugate()) << endl;
+            cout << (q * cov * q.conjugate()) << endl;
             cout << (q * cov * q.inverse()) << endl;
             cout << "---------------------" << endl;
             cout << (q * cov * q.inverse()) << endl;
@@ -938,11 +992,12 @@ namespace xyw_lidar_test
         void testMatrixNorm()
         {
             Eigen::Matrix2d m;
-            m << 1,2,3,4;
-            double norm_F = sqrt(1*1+4+9+16);
+            m << 1, 2, 3, 4;
+            double norm_F = sqrt(1 * 1 + 4 + 9 + 16);
             LOG(INFO) << "\n"
                       << m
-                      << "\n norm_F: \n"<< norm_F
+                      << "\n norm_F: \n"
+                      << norm_F
                       << "\n m.norm():"
                       << "\n"
                       << m.norm()
@@ -953,7 +1008,7 @@ namespace xyw_lidar_test
                       << "\n"
                       << m.normalized()
                       << "\n m after m.normalized: " << m;
-                      m.normalize();
+            m.normalize();
             LOG(INFO) << "\n m after m.normlize(): " << m;
         }
         // 测试Eigen的泛型初始化
@@ -1026,12 +1081,15 @@ namespace xyw_lidar_test
         // 获得4f还是3f，仅仅是出于齐次计算是否方便考虑，第4位总是1
         void testGetVector4fMap()
         {
-            LOG(INFO) << "Vector 4f " << cloud_in->at(20).getVector4fMap();
-            LOG(INFO) << "Vector 3f " << cloud_in->at(20).getVector3fMap();
-            LOG(INFO) << "Arrary 4f " << cloud_in->at(20).getArray4fMap();
-            LOG(INFO) << "Arrary 3f " << cloud_in->at(20).getArray3fMap();
+            cout << "Vector 4f " << cloud_in->at(20).getVector4fMap() << endl;
+            cout << "Vector 3f " << cloud_in->at(20).getVector3fMap() << endl;
+            cout << "Arrary 4f " << cloud_in->at(20).getArray4fMap() << endl;
+            cout << "Arrary 3f " << cloud_in->at(20).getArray3fMap() << endl;
             // Point输出是行向量
-            LOG(INFO) << "point info " << cloud_in->at(20);
+            cout << "point info " << cloud_in->at(20) << endl;
+            Eigen::Vector4f v(Eigen::Vector4f::Ones());
+            v.block<3, 1>(0, 0) = cloud_in->at(20).getVector3fMap();
+            cout << v << endl;
         }
         // 对矩阵元素进行操作可以考虑调用array()方法
         void testEigenArrayAbs()
@@ -1110,11 +1168,37 @@ namespace xyw_lidar_test
             chrono::steady_clock::time_point t2 = chrono::steady_clock::now();
             std::chrono::duration<double> time_used = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
             LOG(INFO) << "PCL implement spend time: " << time_used.count() * 1000 << " ms";
+            cout << "cloud size: " << cloud_out.size() << endl;
+            cloud_out.clear();
+            int size = cloud_in->size();
+
+            pcl::PointCloud<pcl::PointXYZI>::Ptr cloudOut(new pcl::PointCloud<pcl::PointXYZI>());
+            cloudOut->resize(cloud_in->size());
+            Eigen::Matrix4f transCur(m);
+            tic::TicTocPart tictoc;
+#pragma omp parallel for num_threads(4)
+            for (int i = 0; i < size; i++)
+            {
+                const auto &pointFrom = cloud_in->points[i];
+                cloudOut->points[i].x = transCur(0, 0) * pointFrom.x + transCur(0, 1) * pointFrom.y + transCur(0, 2) * pointFrom.z + transCur(0, 3);
+                cloudOut->points[i].y = transCur(1, 0) * pointFrom.x + transCur(1, 1) * pointFrom.y + transCur(1, 2) * pointFrom.z + transCur(1, 3);
+                cloudOut->points[i].z = transCur(2, 0) * pointFrom.x + transCur(2, 1) * pointFrom.y + transCur(2, 2) * pointFrom.z + transCur(2, 3);
+                cloudOut->points[i].intensity = pointFrom.intensity;
+            }
+            cout << "lio_sam time: " << tictoc.toc() << endl;
+            auto mm = static_cast<Eigen::Affine3f>(m);
+            tictoc.toc();
+            *cloudOut = *cloud_in;
+#pragma omp parallel for num_threads(4)
+            for (int i = 0; i < size; i++)
+            {
+                cloudOut->points[i].getVector3fMap() = mm * cloud_in->points[i].getVector3fMap();
+            }
+            cout << "pcl method: " << tictoc.toc() << endl;
             // omp trans
             t1 = chrono::steady_clock::now();
-            omp_set_num_threads(std::min(6, omp_get_max_threads()));
-            auto mm = static_cast<Eigen::Affine3f>(m);
-            auto size = cloud_in->size();
+            omp_set_num_threads(std::min(4, omp_get_max_threads()));
+
             for (int i = 0; i < 1; i++)
             {
 #pragma omp parallel for //Multi-thread

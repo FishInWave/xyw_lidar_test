@@ -10,7 +10,7 @@
             "request": "launch",
             "program": "/home/xyw/catkin_ws/devel/lib/xyw_lidar_test/xyw_lidar_test_node",
             "args": [],
-            "stopAtEntry": true,
+            "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],
             "externalConsole": false,
