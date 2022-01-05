@@ -64,6 +64,9 @@
         "string_view": "cpp",
         "geometry": "cpp",
         "mutex": "cpp",
-        "condition_variable": "cpp"
+        "condition_variable": "cpp",
+        "codecvt": "cpp",
+        "forward_list": "cpp",
+        "future": "cpp"
     }
 }
