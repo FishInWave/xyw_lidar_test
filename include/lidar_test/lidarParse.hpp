@@ -164,25 +164,25 @@ namespace xyw_lidar_test
         ~lidarParse()
         {
             cout << " hello" << endl;
-            google::ShutdownGoogleLogging();
+            // google::ShutdownGoogleLogging();
         };
         lidarParse(ros::NodeHandle nh, int argc, char **argv) : type_(LSQ::G)
         {
             cloud_in.reset(new pcl::PointCloud<pcl::PointXYZI>);
             // 初始化GLOG
-            FLAGS_log_dir = "/home/xyw/catkin_ws/src/xyw_lidar_test/log";
-            google::InitGoogleLogging(argv[0]); // 以程序命名
-            google::SetLogDestination(google::GLOG_INFO, "/home/xyw/catkin_ws/src/xyw_lidar_test/log/INFO_");
-            google::SetStderrLogging(google::GLOG_INFO);
-            google::SetLogFilenameExtension("log_");
-            FLAGS_colorlogtostderr = true;          // Set log color
-            FLAGS_logbufsecs = 0;                   // Set log output speed(s)
-            FLAGS_max_log_size = 1024;              // Set max log file size
-            FLAGS_stop_logging_if_full_disk = true; // If disk is full
+            // FLAGS_log_dir = "/home/xyw/catkin_ws/src/xyw_lidar_test/log";
+            // google::InitGoogleLogging(argv[0]); // 以程序命名
+            // google::SetLogDestination(google::GLOG_INFO, "/home/xyw/catkin_ws/src/xyw_lidar_test/log/INFO_");
+            // google::SetStderrLogging(google::GLOG_INFO);
+            // google::SetLogFilenameExtension("log_");
+            // FLAGS_colorlogtostderr = true;          // Set log color
+            // FLAGS_logbufsecs = 0;                   // Set log output speed(s)
+            // FLAGS_max_log_size = 1024;              // Set max log file size
+            // FLAGS_stop_logging_if_full_disk = true; // If disk is full
             // load a pcd file
             pcl::io::loadPCDFile("/home/xyw/catkin_ws/src/xyw_lidar_test/res/000027.pcd", *cloud_in);
 
-            LOG(INFO) << "load " << cloud_in->size() << " points";
+            cout << "load " << cloud_in->size() << " points" <<endl;
             vis_pub = nh.advertise<visualization_msgs::MarkerArray>("vis_marker", 10);
             point1_pub = nh.advertise<sensor_msgs::PointCloud2>("cloud1", 10);
             point2_pub = nh.advertise<sensor_msgs::PointCloud2>("cloud2", 10);
@@ -241,7 +241,19 @@ namespace xyw_lidar_test
             // testMap();
             // testCovRotate();
             // testEigenNoalias();
-            testPCLConstPtr();
+            // testPCLConstPtr();
+            testEigenResize();
+        }
+        // eigen::ones是全1矩阵，和matlab的命名一致
+        // vector resize后，里面的矩阵无默认值，且不等于Zero
+        void testEigenResize(){
+            Eigen::Matrix4d m1(Eigen::Matrix4d::Ones());
+            Eigen::Matrix4d m2(Eigen::Matrix4d::Zero());
+            Eigen::Matrix4d m3(Eigen::Matrix4d::Identity());
+            vector<Eigen::Matrix4d> v;
+            v.resize(4);
+            cout << m1 << "\n" << v[3] << endl;
+            cout << v[3].isZero() << endl;
         }
         // PCL里的ConstPtr是指向Const对象的指针，但这只代表不能通过指针修改对象，对象本身还是可以通过其他方式修改的。
         // 对于指向const对象的指针，我们可以对其进行重新赋值，比如等于一个指向(非)const对象的指针，实现对象的切换.可以是赋值，也可以是reset初始化；
