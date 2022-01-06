@@ -240,49 +240,70 @@ namespace xyw_lidar_test
             // cout << testEigenTopoint<pcl::PointXYZ>() << endl;
             // testMap();
             // testCovRotate();
-            testEigenNoalias();
+            // testEigenNoalias();
+            testPCLConstPtr();
+        }
+        // PCL里的ConstPtr是指向Const对象的指针，但这只代表不能通过指针修改对象，对象本身还是可以通过其他方式修改的。
+        // 对于指向const对象的指针，我们可以对其进行重新赋值，比如等于一个指向(非)const对象的指针，实现对象的切换.可以是赋值，也可以是reset初始化；
+        // 反过来，如果前面再加一个const，则代表指针本身也是const，不可以修改对象。详见于《C++ Primer》
+        void testPCLConstPtr()
+        {
+            PointCloud::ConstPtr cloud = cloud_in;
+            PointCloud::Ptr cloud_Ptr = cloud_in;
+            cout << cloud->at(1).x << endl;
+            cloud_Ptr->at(1).x = 5;
+            cloud = cloud_Ptr;
+            cout << cloud->at(1) << endl;
         }
         // http://eigen.tuxfamily.org/dox/classEigen_1_1MatrixBase.html#a2c1085de7645f23f240876388457da0b
         // Eigen乘法默认是启用eval的，即默认存在混淆。实际上，只要一个变量同时在两侧出现，那么就必须解决混淆。
         // 即仅当两侧没有相同数据存在时，才可以用noalias来提速,也应当提速。
-        void testEigenNoalias(){
+        void testEigenNoalias()
+        {
             Eigen::Matrix4f m;
-            m << 0.998989, -0.0393154 ,-0.0217818 ,17.2709 ,0.0396042, 0.999131 ,0.0129876 ,0.953767, 0.0212523,-0.0138372 ,0.999678, 0.45526,0,0,0,1;
+            m << 0.998989, -0.0393154, -0.0217818, 17.2709, 0.0396042, 0.999131, 0.0129876, 0.953767, 0.0212523, -0.0138372, 0.999678, 0.45526, 0, 0, 0, 1;
             Eigen::Matrix4f n(m);
             Eigen::Matrix4f o(m);
             tic::TicTocPart t;
-            m.noalias() = m*m;
-            cout << t.toc() <<endl;
-            cout << "m*m.noalias: \n" << m << endl;
+            m.noalias() = m * m;
+            cout << t.toc() << endl;
+            cout << "m*m.noalias: \n"
+                 << m << endl;
             t.toc();
-            n = n*n;
-            cout << t.toc() <<endl;
-            cout << "n*n:\n" << n << endl;
+            n = n * n;
+            cout << t.toc() << endl;
+            cout << "n*n:\n"
+                 << n << endl;
             t.toc();
             o = (o * o).eval();
-            cout << t.toc() <<endl;
-            cout << "eval*eval():\n" << o << endl;
+            cout << t.toc() << endl;
+            cout << "eval*eval():\n"
+                 << o << endl;
         }
-        void testCovRotate(){
+        void testCovRotate()
+        {
             Eigen::Matrix4f m;
-            m << 0.998989, -0.0393154 ,-0.0217818 ,17.2709 ,0.0396042, 0.999131 ,0.0129876 ,0.953767, 0.0212523,-0.0138372 ,0.999678, 0.45526,0,0,0,1;
+            m << 0.998989, -0.0393154, -0.0217818, 17.2709, 0.0396042, 0.999131, 0.0129876, 0.953767, 0.0212523, -0.0138372, 0.999678, 0.45526, 0, 0, 0, 1;
             PointCloud::ConstPtr cloud_cptr = cloud_in;
 
             PointCloud after_rotate;
             std::vector<Eigen::Matrix4d, Eigen::aligned_allocator<Eigen::Matrix4d>> source_covs;
             std::vector<Eigen::Matrix4d, Eigen::aligned_allocator<Eigen::Matrix4d>> after_covs;
-            calculate_covariances(cloud_cptr,source_covs,20,16);
-            
-            pcl::transformPointCloud(*cloud_in,after_rotate,m);
+            calculate_covariances(cloud_cptr, source_covs, 20, 16);
+
+            pcl::transformPointCloud(*cloud_in, after_rotate, m);
             PointCloud::ConstPtr rotate_cptr(new PointCloud(after_rotate));
-            calculate_covariances(rotate_cptr,after_covs,20,16);
+            calculate_covariances(rotate_cptr, after_covs, 20, 16);
 
-            for(int i = 0; i < 10 ; i++){
-                cout << "source_covs: \n" << source_covs[i] << endl;
-                cout << "rotate_covs: \n" << after_covs[i] << endl;
-                cout << "R*cov*R^T: \n" << m*source_covs[i].cast<float>()*m.transpose() << endl;
+            for (int i = 0; i < 10; i++)
+            {
+                cout << "source_covs: \n"
+                     << source_covs[i] << endl;
+                cout << "rotate_covs: \n"
+                     << after_covs[i] << endl;
+                cout << "R*cov*R^T: \n"
+                     << m * source_covs[i].cast<float>() * m.transpose() << endl;
             }
-
         }
         // map删除需要避免自增，且若要遍历删除必须使用for而不是range for
         // https://blog.csdn.net/weixin_34258078/article/details/92290970
