@@ -182,7 +182,7 @@ namespace xyw_lidar_test
             // load a pcd file
             pcl::io::loadPCDFile("/home/xyw/catkin_ws/src/xyw_lidar_test/res/000027.pcd", *cloud_in);
 
-            cout << "load " << cloud_in->size() << " points" <<endl;
+            cout << "load " << cloud_in->size() << " points" << endl;
             vis_pub = nh.advertise<visualization_msgs::MarkerArray>("vis_marker", 10);
             point1_pub = nh.advertise<sensor_msgs::PointCloud2>("cloud1", 10);
             point2_pub = nh.advertise<sensor_msgs::PointCloud2>("cloud2", 10);
@@ -203,7 +203,7 @@ namespace xyw_lidar_test
             // testEigenVectorDir();
             // testEigenArrayAbs();
             // testGetVector4fMap();
-            // testGauss();
+            testGauss();
             // testEigenTemplate<double>();
             // testMatrixNorm();
             // testAngleAxlesAndEulerAngle();
@@ -242,17 +242,19 @@ namespace xyw_lidar_test
             // testCovRotate();
             // testEigenNoalias();
             // testPCLConstPtr();
-            testEigenResize();
+            // testEigenResize();
         }
         // eigen::ones是全1矩阵，和matlab的命名一致
         // vector resize后，里面的矩阵无默认值，且不等于Zero
-        void testEigenResize(){
+        void testEigenResize()
+        {
             Eigen::Matrix4d m1(Eigen::Matrix4d::Ones());
             Eigen::Matrix4d m2(Eigen::Matrix4d::Zero());
             Eigen::Matrix4d m3(Eigen::Matrix4d::Identity());
             vector<Eigen::Matrix4d> v;
             v.resize(4);
-            cout << m1 << "\n" << v[3] << endl;
+            cout << m1 << "\n"
+                 << v[3] << endl;
             cout << v[3].isZero() << endl;
         }
         // PCL里的ConstPtr是指向Const对象的指针，但这只代表不能通过指针修改对象，对象本身还是可以通过其他方式修改的。
@@ -412,13 +414,40 @@ namespace xyw_lidar_test
             cout << (q * cov * q.inverse()) << endl;
             cout << (r * cov * r.transpose()) << endl;
         }
-        // Eigen::Matrix可以用C类型的指针或者数组初始化
+        // Eigen::Matrix可以用C类型的指针或者数组初始化，或者用流输入
+        // 经测试：矩阵使用数组初始化时默认是列排列，但可以通过模板option进行指定
+        // 流输入总是行排列，符合使用逻辑。
         void testEigenForceTrans()
         {
-            double a[6] = {1.1, 2.1, 3.4, 4.5, 5.6, 6.4};
-            Eigen::Matrix<double, 2, 3> m(a);
+            double a[9] = {1.1, 2.1, 3.4, 4.5, 5.6, 6.4, 5, 8, 9};
+            // 测试数组构造函数
+            Eigen::Matrix<double, 3, 3> m(a);                      // 列
+            Eigen::Matrix3d m_d(a);                                // 列
+            Eigen::Matrix<double, 3, 3, Eigen::RowMajor> m_row(a); // 行
+            Eigen::Matrix<double, 3, 3, Eigen::ColMajor> m_col(a); // 列
+
+            cout << m.cast<int>() << "\n"
+                 << endl;
+            cout << m_d.cast<int>() << "\n"
+                 << endl;
+            cout << m_row.cast<int>() << "\n"
+                 << endl;
+            cout << m_col.cast<int>() << "\n"
+                 << endl;
+            // 测试流输入-》均为行
+            m << 1.1, 2.1, 3.4, 4.5, 5.6, 6.4, 5, 8, 9;
+            m_d << 1.1, 2.1, 3.4, 4.5, 5.6, 6.4, 5, 8, 9;
+            m_row << 1.1, 2.1, 3.4, 4.5, 5.6, 6.4, 5, 8, 9;
+            m_col << 1.1, 2.1, 3.4, 4.5, 5.6, 6.4, 5, 8, 9;
+            cout << m.cast<int>() << "\n"
+                 << endl;
+            cout << m_d.cast<int>() << "\n"
+                 << endl;
+            cout << m_row.cast<int>() << "\n"
+                 << endl;
+            cout << m_col.cast<int>() << "\n"
+                 << endl;
             Eigen::Vector4d v(a);
-            cout << m.cast<int>() << endl;
             Eigen::Map<Eigen::Quaterniond> q(a);
             cout << q.w() << endl;
             Eigen::Vector3i s_a = v.head<3>().cast<int>();
@@ -1144,6 +1173,14 @@ namespace xyw_lidar_test
         // 答案正确
         void testGauss()
         {
+            // 流操作顺序
+            Eigen::Matrix3f origin;
+            origin << 1,0,-2,3,0,-3,5,0,-4;
+            cout << origin << endl;
+            origin.colwise() -= origin.rowwise().mean().eval();
+            Eigen::Matrix3f origin_cov = origin * origin.transpose() / (origin.rows()-1);
+            cout << origin_cov << endl;
+            return;
             // 生成正态分布点云，均值为（3,4,5），方差分别为0.5,2,4;
             std::normal_distribution<float> gaussX(3, 10);
             std::normal_distribution<float> gaussY(60, 20);
@@ -1177,17 +1214,17 @@ namespace xyw_lidar_test
             n.colwise() -= n.rowwise().mean().eval();
             Eigen::Matrix4f cov_n = n * n.transpose() / 1000;
             Eigen::Matrix4f Trans = iso.matrix();
-            LOG(INFO) << "origin cov: ";
-            LOG(INFO) << cov.block<3, 3>(0, 0);
-            LOG(INFO) << "transformed cov:";
-            LOG(INFO) << cov_n.block<3, 3>(0, 0);
-            LOG(INFO) << "AnAT:";
-            LOG(INFO) << (Trans * cov * (Trans.transpose())).block<3, 3>(0, 0);
-            LOG(INFO) << "m+AnAT:";
-            Eigen::Matrix3f M_ANAT = (cov_n + iso.matrix() * cov * iso.matrix().transpose()).block<3, 3>(0, 0);
-            Eigen::Matrix3f Mahalanobis = M_ANAT.inverse();
-            LOG(INFO) << Mahalanobis;
-            LOG(INFO) << Mahalanobis.transpose() * Mahalanobis;
+            // LOG(INFO) << "origin cov: ";
+            // LOG(INFO) << cov.block<3, 3>(0, 0);
+            // LOG(INFO) << "transformed cov:";
+            // LOG(INFO) << cov_n.block<3, 3>(0, 0);
+            // LOG(INFO) << "AnAT:";
+            // LOG(INFO) << (Trans * cov * (Trans.transpose())).block<3, 3>(0, 0);
+            // LOG(INFO) << "m+AnAT:";
+            // Eigen::Matrix3f M_ANAT = (cov_n + iso.matrix() * cov * iso.matrix().transpose()).block<3, 3>(0, 0);
+            // Eigen::Matrix3f Mahalanobis = M_ANAT.inverse();
+            // LOG(INFO) << Mahalanobis;
+            // LOG(INFO) << Mahalanobis.transpose() * Mahalanobis;
         }
         // Vector和Array只是类型的区别，数值上一样
         // 获得4f还是3f，仅仅是出于齐次计算是否方便考虑，第4位总是1

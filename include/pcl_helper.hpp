@@ -26,7 +26,7 @@ void calculate_covariances(typename boost::shared_ptr<const pcl::PointCloud<Poin
         }
 
         neighbors.colwise() -= neighbors.rowwise().mean().eval();
-        Eigen::Matrix4d cov = neighbors * neighbors.transpose() / k_correspondences_;
+        Eigen::Matrix4d cov = neighbors * neighbors.transpose() / (k_correspondences_-1);
 
         covariances[i] = cov;
     }

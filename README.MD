@@ -66,7 +66,7 @@
 37. `testSwitch`: 有return后，直接结束整个函数，因此不需要break；
 38.  `testEnumClass`: 测试c++11新特性 enum class和switch的用法
 39. `testSO3`: 验证fast-gicp里的SO3运算，其实等价于Eigen里轴角到四元数的转换
-40. `testEigenForceTrans`: Eigen::Matrix可以用C类型的指针或者数组初始化
+40. `testEigenForceTrans`: Eigen::Matrix可以用C类型的指针或者数组初始化，经测试：矩阵使用数组初始化时默认是列排列，但可以通过模板option进行指定，流输入总是行排列，符合使用逻辑。
 41. `testQuateRotate`: q单位化后和matrix可以置换，没必要做转换。
 42. `测试类别和计算速度`： O3优化下，点云变换使用数学表达式会比调pcl库更快。
 43. `测试std::map`： 遍历删除有特殊的for写法，不可以用range for，插入根据使用的重载版本，返回值也有不同
@@ -80,3 +80,6 @@
 ```
 roslaunch xyw_lidar_test xyw_start.launch
 ```
+
+# python部分
+新增，主要用于数学验证。
